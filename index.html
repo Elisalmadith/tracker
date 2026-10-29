@@ -71,6 +71,9 @@ textarea{min-height:64px;resize:vertical}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .chip.n.ideal{border-color:var(--accent);border-width:2px}
 .hint{font-size:.85rem;color:var(--muted)}
+.why{padding:2px 0 6px 56px;display:flex;flex-direction:column;gap:6px}
+.why .q{font-weight:700;font-size:.92rem}
+@media (max-width:420px){ .why{padding-left:0} }
 .score{display:flex;align-items:baseline;gap:8px}
 .score .big{font-family:var(--f-display);font-size:2.4rem;line-height:1}
 .score.full .big{color:var(--gold)}
@@ -150,6 +153,7 @@ ul.plain{margin:0;padding-left:18px}
     </div>
     <label class="label" for="f-when">Wann</label>
     <input type="datetime-local" id="f-when">
+    <div class="row"><button type="button" class="chip" id="f-pms" aria-pressed="false">PMS-Tag</button><span class="hint">gilt für den ganzen Tag</span></div>
     <div>
       <div class="label" style="margin-bottom:6px">Mahlzeit (optional)</div>
       <div class="chips" id="meal"></div>
@@ -159,9 +163,9 @@ ul.plain{margin:0;padding-left:18px}
       <div class="label" style="margin-bottom:6px">Vorher reguliert mit</div>
       <div class="chips" id="reg"></div>
     </div>
-    <div id="trig-wrap" hidden>
-      <div class="label" style="margin-bottom:6px">Was war der Auslöser?</div>
-      <div class="chips" id="trig"></div>
+    <div id="feel-wrap" hidden>
+      <div class="label" style="margin-bottom:6px">Welches Gefühl war da? (optional)</div>
+      <div class="chips" id="feel"></div>
     </div>
     <div>
       <label class="label" for="f-note">Notiz (optional)</label>
@@ -190,6 +194,7 @@ ul.plain{margin:0;padding-left:18px}
       <h2 id="d-title">Heute</h2>
       <button id="d-next" aria-label="Nächster Tag">›</button>
     </div>
+    <div class="row"><button type="button" class="chip" id="d-pms" aria-pressed="false">PMS-Tag</button><span class="hint">gilt für den ganzen Tag</span></div>
     <div id="d-body"></div>
   </section>
 
@@ -233,7 +238,11 @@ const CRIT=[
 const MAX=CRIT.length;
 const MEALS=["Frühstück","Mittagessen","Abendessen","Snack"];
 const REG=["Atmen","Meditation","Akupressurmatte","Spaziergang","Lesen","5-4-3-2-1 / Erden","Hand auf Herz/Bauch","Schütteln","Anderes"];
-const TRIG=["Stress","Emotion","Runterkommen","Gewohnheit","Müde","Abgelenkt","Anderes"];
+const SHARED=["Energie gesucht","Runterkommen","Stress / Druck","Belastung betäuben","Halt gesucht","Heißhunger"];
+const WHY_H=[...SHARED,"Vorsorglich","Gelegenheit","Uhrzeit","Langeweile","Belohnung","Anderes"];
+const WHY_B=[...SHARED,"Abgelenkt","Zu schnell gegessen","So lecker, wollte mehr vom Genuss","Signal nicht gespürt oder zu spät gemerkt","Zu lange gewartet","Anderes"];
+const FEEL_TRIGGERS=["Belastung betäuben","Halt gesucht"];
+const FEELINGS=["traurig","unruhig","Angst","Wut","einsam","überfordert","belastet","leer","enttäuscht","gekränkt","schuldig","Sorgen"];
 const HS=[
   [0,"Ausgehungert","Ein körperlicher Notfall, Hunger wurde zu lange ignoriert. Kommt praktisch nie vor."],
   [1,"Intensiver Hunger","Der Magen knurrt anhaltend, Hunger wurde übergangen. Körperlich leer, der Körper braucht klar Nahrung."],
@@ -248,8 +257,8 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=7;
-const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup";
+const APP_VERSION=8;
+const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,"0");
@@ -274,6 +283,11 @@ function persist(){
   try{ localStorage.setItem(KEY,JSON.stringify(entries)); return true }
   catch(e){ storageOk=false; showBanner("Speichern auf diesem Gerät ist gerade nicht möglich. Ist der private Modus aktiv?"); return false }
 }
+let days={};
+try{ const rd=localStorage.getItem(KEY_DAYS); days=rd?JSON.parse(rd):{}; if(!days||typeof days!=="object")days={} }catch(e){ days={} }
+function persistDays(){ try{ localStorage.setItem(KEY_DAYS,JSON.stringify(days)); return true }catch(e){ showBanner("Speichern auf diesem Gerät ist gerade nicht möglich."); return false } }
+const isPms=k=>!!(days[k]&&days[k].pms);
+function togglePms(k){ const d={...(days[k]||{})}; d.pms=!d.pms; if(d.pms)days[k]=d; else delete days[k]; persistDays() }
 function showBanner(t){const b=$("banner");b.textContent=t;b.hidden=false}
 load();
 if(!storageOk) showBanner("Speichern auf diesem Gerät ist gerade nicht möglich. Ist der private Modus aktiv?");
@@ -281,7 +295,7 @@ if(navigator.storage&&navigator.storage.persist){ navigator.storage.persist().ca
 
 let view="add", dayRef=startOfDay(new Date()), weekRef=weekStart(new Date());
 let form=blank(), editingId=null;
-function blank(){return{c:false,h:false,p:false,s:false,f:false,b:false,n:false,before:null,after:null,meal:null,reg:[],triggers:[],note:""}}
+function blank(){return{c:false,h:false,p:false,s:false,f:false,b:false,n:false,before:null,after:null,meal:null,reg:[],whyH:[],whyB:[],feelings:[],touchedH:false,touchedB:false,legacy:[],note:""}}
 $("today-line").textContent=fmtDay(new Date())+" · Version "+APP_VERSION;
 
 /* ---------- Formular ---------- */
@@ -293,7 +307,7 @@ function renderForm(){
     const b=document.createElement("button");
     b.type="button"; b.className="ck"; b.setAttribute("aria-pressed",form[c.k]);
     b.innerHTML=`<span class="mark">${c.L}</span><span class="t"><b>${c.name} · ${c.de}</b><small>${c.hint}</small></span><span class="state">${form[c.k]?"Ja":"Nein"}</span>`;
-    b.onclick=()=>{form[c.k]=!form[c.k];renderForm()};
+    b.onclick=()=>{form[c.k]=!form[c.k]; if(c.k==="h")form.touchedH=true; if(c.k==="b")form.touchedB=true; renderForm()};
     crit.appendChild(b);
     if(c.k==="h"||c.k==="b"){
       const field=c.k==="h"?"before":"after", ideal=c.k==="h"?2:5;
@@ -311,18 +325,41 @@ function renderForm(){
       w.appendChild(ch);
       if(form[field]!=null){const d=document.createElement("span");d.className="hint";d.textContent=`${form[field]} · ${HS[form[field]][1]}: ${HS[form[field]][2]}`;w.appendChild(d)}
       crit.appendChild(w);
+      const isH=c.k==="h", show=!form[c.k]&&(isH?(form.touchedH||form.before!=null):(form.touchedB||form.after!=null));
+      if(show){
+        const y=document.createElement("div"); y.className="why";
+        y.innerHTML=`<span class="q">${isH?"Was war statt Hunger da?":"Was hat mich weiteressen lassen?"}</span>`;
+        y.appendChild(makeChips(isH?WHY_H:WHY_B,isH?form.whyH:form.whyB));
+        crit.appendChild(y);
+      }
     }
   });
   const mel=$("meal"); mel.innerHTML="";
   MEALS.forEach(t=>{const x=document.createElement("button");x.type="button";x.className="chip";x.textContent=t;
     x.setAttribute("aria-pressed",form.meal===t);x.onclick=()=>{form.meal=form.meal===t?null:t;renderForm()};mel.appendChild(x)});
   chipGroup("reg",REG,form.reg);
-  chipGroup("trig",TRIG,form.triggers);
+  const needFeel=activeWhy().some(t=>FEEL_TRIGGERS.includes(t));
+  $("feel-wrap").hidden=!needFeel;
+  if(needFeel){ const f=$("feel"); f.innerHTML=""; f.appendChild(makeChips(FEELINGS,form.feelings)) }
+  $("f-pms").setAttribute("aria-pressed",isPms(formDateKey()));
   const sc=scoreOf(form);
-  $("trig-wrap").hidden=sc===MAX;
   $("score").className="score num"+(sc===MAX?" full":"");
   $("score").querySelector(".big").textContent=sc;
 }
+function activeWhy(){return [...(form.h?[]:form.whyH),...(form.b?[]:form.whyB)]}
+function formDateKey(){const v=$("f-when").value;return dkey(v?new Date(v):new Date())}
+function makeChips(list,arr){
+  const el=document.createElement("div"); el.className="chips";
+  list.forEach(t=>{
+    const x=document.createElement("button"); x.type="button"; x.className="chip"; x.textContent=t;
+    x.setAttribute("aria-pressed",arr.includes(t));
+    x.onclick=()=>{const i=arr.indexOf(t); i>=0?arr.splice(i,1):arr.push(t); renderForm()};
+    el.appendChild(x);
+  });
+  return el;
+}
+$("f-pms").onclick=()=>{togglePms(formDateKey());renderForm()};
+$("f-when").addEventListener("change",()=>renderForm());
 function chipGroup(id,list,arr){
   const el=$(id); el.innerHTML="";
   list.forEach(t=>{
@@ -338,7 +375,8 @@ function resetForm(){form=blank();editingId=null;$("f-when").value=toInput(new D
 function editEntry(e){
   editingId=e.id;
   form=blank(); CRIT.forEach(c=>form[c.k]=!!e[c.k]);
-  form.before=e.before??null; form.meal=e.meal??null; form.after=e.after??null; form.reg=[...(e.reg||[])]; form.triggers=[...(e.triggers||[])]; form.note=e.note||"";
+  form.before=e.before??null; form.meal=e.meal??null; form.after=e.after??null; form.reg=[...(e.reg||[])]; form.whyH=[...(e.whyH||[])]; form.whyB=[...(e.whyB||[])]; form.feelings=[...(e.feelings||[])]; form.legacy=[...(e.triggers||[])];
+  form.touchedH=form.whyH.length>0||!e.h; form.touchedB=form.whyB.length>0||!e.b; form.note=e.note||"";
   $("f-when").value=toInput(new Date(e.ts)); $("f-note").value=form.note; $("del-confirm").hidden=true;
   setView("add"); renderForm(); window.scrollTo({top:0});
 }
@@ -346,7 +384,8 @@ $("save").onclick=()=>{
   const when=$("f-when").value?new Date($("f-when").value):new Date();
   const sc=scoreOf(form);
   const body={id:editingId||newId(),ts:when.getTime(),date:dkey(when),time:`${pad(when.getHours())}:${pad(when.getMinutes())}`,
-    before:form.before,after:form.after,meal:form.meal,reg:form.reg,triggers:sc===MAX?[]:form.triggers,note:form.note.trim(),updated:Date.now()};
+    before:form.before,after:form.after,meal:form.meal,reg:form.reg,whyH:form.h?[]:form.whyH,whyB:form.b?[]:form.whyB,
+    feelings:activeWhy().some(t=>FEEL_TRIGGERS.includes(t))?form.feelings:[],triggers:form.legacy,note:form.note.trim(),updated:Date.now()};
   CRIT.forEach(c=>body[c.k]=form[c.k]);
   const i=entries.findIndex(e=>e.id===body.id);
   if(i>=0)entries[i]=body; else entries.push(body);
@@ -365,6 +404,7 @@ function renderDay(){
   const isToday=dkey(dayRef)===dkey(new Date());
   $("d-title").textContent=isToday?"Heute":fmtDay(dayRef);
   $("d-next").disabled=isToday;
+  $("d-pms").setAttribute("aria-pressed",isPms(dkey(dayRef)));
   const list=inRange(dayRef,addDays(dayRef,1)), body=$("d-body");
   const newBtn=`<button type="button" class="btn" id="d-new">Neue Mahlzeit eintragen</button>`;
   if(!list.length){body.innerHTML=`<div class="empty"><b>Noch keine Mahlzeit</b>Trag deine erste Mahlzeit ein.</div>${newBtn}`;}
@@ -376,6 +416,9 @@ function renderDay(){
       const sc=scoreOf(e), meta=[];
       if(e.before!=null||e.after!=null) meta.push(`Hunger ${e.before??"–"} → ${e.after??"–"}`);
       if(e.reg&&e.reg.length) meta.push("Reguliert: "+e.reg.map(esc).join(", "));
+      if(e.whyH&&e.whyH.length) meta.push("Statt Hunger: "+e.whyH.map(esc).join(", "));
+      if(e.whyB&&e.whyB.length) meta.push("Weitergegessen: "+e.whyB.map(esc).join(", "));
+      if(e.feelings&&e.feelings.length) meta.push("Gefühl: "+e.feelings.map(esc).join(", "));
       if(e.triggers&&e.triggers.length) meta.push("Auslöser: "+e.triggers.map(esc).join(", "));
       if(e.note) meta.push(esc(e.note));
       return `<button type="button" class="entry" data-id="${esc(e.id)}"><span class="time">${esc(e.time||"")}${e.meal?`<br><span class="meta" style="font-weight:400">${esc(e.meal)}</span>`:""}</span>
@@ -387,6 +430,7 @@ function renderDay(){
   }
   $("d-new").onclick=()=>{resetForm();setView("add")};
 }
+$("d-pms").onclick=()=>{togglePms(dkey(dayRef));renderDay()};
 $("d-prev").onclick=()=>{dayRef=addDays(dayRef,-1);renderDay()};
 $("d-next").onclick=()=>{dayRef=addDays(dayRef,1);renderDay()};
 
@@ -394,8 +438,9 @@ $("d-next").onclick=()=>{dayRef=addDays(dayRef,1);renderDay()};
 function weekStats(ws){
   const list=inRange(ws,addDays(ws,7)), n=list.length, full=list.filter(e=>scoreOf(e)===MAX).length;
   const per=CRIT.map(c=>({c,hit:list.filter(e=>e[c.k]).length}));
-  const trig={}; list.forEach(e=>(e.triggers||[]).forEach(t=>trig[t]=(trig[t]||0)+1));
-  return{list,n,full,per,trig};
+  const cnt=key=>{const o={};list.forEach(e=>(e[key]||[]).forEach(t=>o[t]=(o[t]||0)+1));return Object.entries(o).sort((a,b)=>b[1]-a[1])};
+  return{list,n,full,per,whyH:cnt("whyH"),whyB:cnt("whyB"),feel:cnt("feelings"),trig:cnt("triggers"),
+    missH:list.filter(e=>!e.h).length,missB:list.filter(e=>!e.b).length};
 }
 function renderWeek(){
   const ws=weekRef, we=addDays(ws,6), isCur=dkey(ws)===dkey(weekStart(new Date()));
@@ -419,14 +464,24 @@ function renderWeek(){
     const names=weakest.map(p=>`<b>${p.c.L} · ${p.c.name}</b> (${p.c.de.toLowerCase()})`).join(" und ");
     h+=`<div class="callout"><p>Am schwersten fiel dir diese Woche ${names}. ${weakest.length>1?"Sie fehlten":"Es fehlte"} bei ${s.n-minHit} von ${s.n} Mahlzeiten.</p></div>`;
   }else h+=`<div class="callout good"><p>Alle sieben Kriterien bei jeder Mahlzeit erfüllt.</p></div>`;
-  const tr=Object.entries(s.trig).sort((a,b)=>b[1]-a[1]);
-  if(tr.length) h+=`<div><div class="label" style="margin-bottom:6px">Häufigste Auslöser</div><ul class="plain">${tr.map(([t,c])=>`<li>${esc(t)} <span class="num">${c}×</span></li>`).join("")}</ul></div>`;
+  const top=arr=>arr.slice(0,3).map(([t,c])=>`${esc(t)} (${c}×)`).join(", ");
+  const lines=[];
+  if(s.missH) lines.push(`<li><b>H fehlte ${s.missH}×</b>${s.whyH.length?`, meist ${top(s.whyH)}`:""}.</li>`);
+  if(s.missB) lines.push(`<li><b>B fehlte ${s.missB}×</b>${s.whyB.length?`, meist ${top(s.whyB)}`:""}.</li>`);
+  if(s.feel.length) lines.push(`<li><b>Gefühle:</b> ${s.feel.map(([t,c])=>`${c}× ${esc(t)}`).join(", ")}.</li>`);
+  if(s.trig.length) lines.push(`<li><b>Frühere Auslöser:</b> ${top(s.trig)}.</li>`);
+  if(lines.length) h+=`<div><div class="label" style="margin-bottom:6px">Was dahinter lag</div><ul class="plain" style="display:flex;flex-direction:column;gap:4px">${lines.join("")}</ul></div>`;
+  const pmsL=s.list.filter(e=>isPms(e.date||dkey(new Date(e.ts)))), othL=s.list.filter(e=>!isPms(e.date||dkey(new Date(e.ts))));
+  if(pmsL.length){
+    const pf=pmsL.filter(e=>scoreOf(e)===MAX).length, of=othL.filter(e=>scoreOf(e)===MAX).length;
+    h+=`<div class="callout good"><p><b>PMS-Tage:</b> ${pf} von ${pmsL.length} Mahlzeiten mit ${MAX}/${MAX}${othL.length?`. An anderen Tagen: ${of} von ${othL.length}.`:"."}</p></div>`;
+  }
   const byMeal=MEALS.map(m=>{const l=s.list.filter(e=>e.meal===m);return{m,n:l.length,f:l.filter(e=>scoreOf(e)===MAX).length}}).filter(x=>x.n);
   if(byMeal.length) h+=`<div><div class="label" style="margin-bottom:8px">${MAX}/${MAX} nach Mahlzeit</div><div class="bars">`+byMeal.map(x=>{const w=Math.round(x.f/x.n*100);
     return `<div class="bar" style="grid-template-columns:96px 1fr auto"><span>${x.m}</span><div class="track"><div class="fill" style="width:${w}%"></div></div><span class="val">${x.f}/${x.n} · ${w} %</span></div>`}).join("")+`</div></div>`;
   h+=`<div><div class="label" style="margin-bottom:6px">${MAX}/${MAX} pro Tag</div><div class="days">`;
   for(let i=0;i<7;i++){const d=addDays(ws,i), l=inRange(d,addDays(d,1)), f=l.filter(e=>scoreOf(e)===MAX).length;
-    h+=`<div class="day ${dkey(d)===dkey(new Date())?"today":""}">${WD[i]}<b>${l.length?`${f}/${l.length}`:"–"}</b></div>`}
+    h+=`<div class="day ${dkey(d)===dkey(new Date())?"today":""}">${WD[i]}${isPms(dkey(d))?" ·P":""}<b>${l.length?`${f}/${l.length}`:"–"}</b></div>`}
   h+=`</div></div>`;
   body.innerHTML=h;
 }
@@ -440,7 +495,7 @@ function renderData(){
   if(last){const days=Math.floor((Date.now()-Number(last))/864e5);$("last").textContent=days===0?"heute":days===1?"gestern":`vor ${days} Tagen`}
 }
 $("exp").onclick=async()=>{
-  const json=JSON.stringify({app:"10/10 Tracker",version:1,exported:new Date().toISOString(),entries},null,1);
+  const json=JSON.stringify({app:"10/10 Tracker",version:2,exported:new Date().toISOString(),entries,days},null,1);
   const name=`10-10-sicherung-${dkey(new Date())}.json`;
   const markDone=()=>{try{localStorage.setItem(KEY_BK,String(Date.now()))}catch(e){} renderData()};
   try{
@@ -460,7 +515,8 @@ $("imp-file").onchange=e=>{
       if(!Array.isArray(list)) throw 0;
       let added=0; const ids=new Set(entries.map(x=>x.id));
       list.forEach(x=>{ if(x&&x.id&&typeof x.ts==="number"&&!ids.has(x.id)){entries.push(x);ids.add(x.id);added++} });
-      if(persist()){ toast(added?`${added} Einträge geladen`:"Keine neuen Einträge in der Datei"); renderData() }
+      let dAdded=0; if(data&&data.days&&typeof data.days==="object"){ Object.entries(data.days).forEach(([k,v])=>{ if(!days[k]&&v){days[k]=v;dAdded++} }); persistDays() }
+      if(persist()){ toast(added||dAdded?`${added} Einträge geladen`:"Keine neuen Einträge in der Datei"); renderData() }
     }catch(err){ toast("Diese Datei ist keine Tracker-Sicherung") }
     e.target.value="";
   };
