@@ -258,7 +258,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=9;
+const APP_VERSION=10;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -362,12 +362,15 @@ function makeChips(list,arr){
   return el;
 }
 $("f-pms").onclick=()=>{togglePms(formDateKey());renderForm()};
-$("f-when").addEventListener("change",()=>renderForm());
+let whenTouched=false;
+$("f-when").addEventListener("change",()=>{whenTouched=true;renderForm()});
+function refreshWhen(){ if(!editingId&&!whenTouched){ $("f-when").value=toInput(new Date()) } }
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"){ refreshWhen(); if(view==="add")renderForm() } });
 function renderSince(){
   const now=Date.now(), past=entries.filter(e=>e.ts<=now).sort((a,b)=>b.ts-a.ts)[0];
   $("since").textContent=(!editingId&&past)?`Letzte Mahlzeit vor ${fmtDur(now-past.ts)}`:"";
 }
-setInterval(()=>{ if(view==="add")renderSince(); if(view==="day")renderDay() },60000);
+setInterval(()=>{ refreshWhen(); if(view==="add")renderSince(); if(view==="day")renderDay() },60000);
 function chipGroup(id,list,arr){
   const el=$(id); el.innerHTML="";
   list.forEach(t=>{
@@ -379,7 +382,7 @@ function chipGroup(id,list,arr){
 }
 $("f-note").addEventListener("input",e=>form.note=e.target.value);
 
-function resetForm(){form=blank();editingId=null;$("f-when").value=toInput(new Date());$("f-note").value="";$("del-confirm").hidden=true;renderForm()}
+function resetForm(){form=blank();editingId=null;whenTouched=false;$("f-when").value=toInput(new Date());$("f-note").value="";$("del-confirm").hidden=true;renderForm()}
 function editEntry(e){
   editingId=e.id;
   form=blank(); CRIT.forEach(c=>form[c.k]=!!e[c.k]);
@@ -389,6 +392,7 @@ function editEntry(e){
   setView("add"); renderForm(); window.scrollTo({top:0});
 }
 $("save").onclick=()=>{
+  refreshWhen();
   const when=$("f-when").value?new Date($("f-when").value):new Date();
   const sc=scoreOf(form);
   const body={id:editingId||newId(),ts:when.getTime(),date:dkey(when),time:`${pad(when.getHours())}:${pad(when.getMinutes())}`,
