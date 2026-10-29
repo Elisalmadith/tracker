@@ -71,6 +71,7 @@ textarea{min-height:64px;resize:vertical}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .chip.n.ideal{border-color:var(--accent);border-width:2px}
 .hint{font-size:.85rem;color:var(--muted)}
+.gap{font-size:.82rem;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums;padding:2px 0}
 .why{padding:2px 0 6px 56px;display:flex;flex-direction:column;gap:6px}
 .why .q{font-weight:700;font-size:.92rem}
 @media (max-width:420px){ .why{padding-left:0} }
@@ -148,7 +149,7 @@ ul.plain{margin:0;padding-left:18px}
 
   <section id="v-add" class="panel">
     <div class="row between">
-      <h2 id="form-title">Neue Mahlzeit</h2>
+      <div><h2 id="form-title">Neue Mahlzeit</h2><div class="hint num" id="since"></div></div>
       <div class="score num" id="score"><span class="big">0</span><span>/ 7</span></div>
     </div>
     <label class="label" for="f-when">Wann</label>
@@ -257,7 +258,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=8;
+const APP_VERSION=9;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -270,6 +271,7 @@ const weekStart=d=>{const x=startOfDay(d);return addDays(x,-((x.getDay()+6)%7))}
 const fmtDay=d=>d.toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
 const fmtShort=d=>d.toLocaleDateString("de-DE",{day:"numeric",month:"short"});
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtDur=ms=>{const m=Math.max(0,Math.round(ms/60000)),h=Math.floor(m/60),r=m%60;return h?(r?`${h} h ${r} min`:`${h} h`):`${r} min`};
 const scoreOf=e=>CRIT.reduce((a,c)=>a+(e[c.k]?1:0),0);
 const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 
@@ -301,6 +303,7 @@ $("today-line").textContent=fmtDay(new Date())+" · Version "+APP_VERSION;
 /* ---------- Formular ---------- */
 function renderForm(){
   $("form-title").textContent=editingId?"Eintrag bearbeiten":"Neue Mahlzeit";
+  renderSince();
   $("cancel").hidden=!editingId; $("del").hidden=!editingId;
   const crit=$("crit"); crit.innerHTML="";
   CRIT.forEach(c=>{
@@ -360,6 +363,11 @@ function makeChips(list,arr){
 }
 $("f-pms").onclick=()=>{togglePms(formDateKey());renderForm()};
 $("f-when").addEventListener("change",()=>renderForm());
+function renderSince(){
+  const now=Date.now(), past=entries.filter(e=>e.ts<=now).sort((a,b)=>b.ts-a.ts)[0];
+  $("since").textContent=(!editingId&&past)?`Letzte Mahlzeit vor ${fmtDur(now-past.ts)}`:"";
+}
+setInterval(()=>{ if(view==="add")renderSince(); if(view==="day")renderDay() },60000);
 function chipGroup(id,list,arr){
   const el=$(id); el.innerHTML="";
   list.forEach(t=>{
@@ -412,7 +420,8 @@ function renderDay(){
     const full=list.filter(e=>scoreOf(e)===MAX).length, miss=missedList(list);
     let h=`<div class="stats"><div class="stat gold"><div class="label">Mahlzeiten mit ${MAX}/${MAX}</div><div class="v num">${full} von ${list.length}</div><div class="hint">${full===list.length?"alle geschafft":list.length-full===1?"eine noch nicht":(list.length-full)+" noch nicht"}</div></div>
       <div class="stat"><div class="label">Gefehlt</div><div class="v" style="font-size:1.1rem;line-height:1.4;padding-top:6px">${miss.length?miss.map(m=>`${m.c.L} ${m.miss}×`).join(" · "):"nichts"}</div></div></div>`;
-    h+=`<div class="crit">`+list.map(e=>{
+    h+=`<div class="crit">`+list.map((e,i)=>{
+      const gap=i?`<div class="gap">↓ ${fmtDur(e.ts-list[i-1].ts)} später</div>`:"";
       const sc=scoreOf(e), meta=[];
       if(e.before!=null||e.after!=null) meta.push(`Hunger ${e.before??"–"} → ${e.after??"–"}`);
       if(e.reg&&e.reg.length) meta.push("Reguliert: "+e.reg.map(esc).join(", "));
@@ -421,9 +430,9 @@ function renderDay(){
       if(e.feelings&&e.feelings.length) meta.push("Gefühl: "+e.feelings.map(esc).join(", "));
       if(e.triggers&&e.triggers.length) meta.push("Auslöser: "+e.triggers.map(esc).join(", "));
       if(e.note) meta.push(esc(e.note));
-      return `<button type="button" class="entry" data-id="${esc(e.id)}"><span class="time">${esc(e.time||"")}${e.meal?`<br><span class="meta" style="font-weight:400">${esc(e.meal)}</span>`:""}</span>
+      return `${gap}<button type="button" class="entry" data-id="${esc(e.id)}"><span class="time">${esc(e.time||"")}${e.meal?`<br><span class="meta" style="font-weight:400">${esc(e.meal)}</span>`:""}</span>
         <span style="display:flex;flex-direction:column;gap:6px;min-width:0">${lettersHTML(e)}${meta.length?`<span class="meta">${meta.join(" · ")}</span>`:""}</span>
-        <span class="badge ${sc===MAX?"full":""}">${sc}/${MAX}</span></button>`}).join("")+`</div>`;
+        <span class="badge ${sc===MAX?"full":""}">${sc}/${MAX}</span></button>`}).join("")+(isToday&&list[list.length-1].ts<=Date.now()?`<div class="gap">seitdem ${fmtDur(Date.now()-list[list.length-1].ts)}</div>`:"")+`</div>`;
     h+=`<p class="hint" style="margin:0">Eintrag antippen, um ihn zu ändern oder zu löschen.</p>${newBtn}`;
     body.innerHTML=h;
     body.querySelectorAll(".entry").forEach(b=>b.onclick=()=>{const e=entries.find(x=>x.id===b.dataset.id);if(e)editEntry(e)});
