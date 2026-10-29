@@ -150,6 +150,10 @@ ul.plain{margin:0;padding-left:18px}
     </div>
     <label class="label" for="f-when">Wann</label>
     <input type="datetime-local" id="f-when">
+    <div>
+      <div class="label" style="margin-bottom:6px">Mahlzeit (optional)</div>
+      <div class="chips" id="meal"></div>
+    </div>
     <div class="crit" id="crit"></div>
     <div>
       <div class="label" style="margin-bottom:6px">Vorher reguliert mit</div>
@@ -226,6 +230,7 @@ const CRIT=[
   {k:"n",L:"N",name:"Nourished",de:"Genährt",hint:"Lecker und freudig"}
 ];
 const MAX=CRIT.length;
+const MEALS=["Frühstück","Mittagessen","Abendessen","Snack"];
 const REG=["Atmen","Spaziergang","Akupressurmatte","Erden","Anderes"];
 const TRIG=["Stress","Gewohnheit","Müdigkeit","Gesellschaft","Anderes"];
 const HS=[
@@ -274,7 +279,7 @@ if(navigator.storage&&navigator.storage.persist){ navigator.storage.persist().ca
 
 let view="add", dayRef=startOfDay(new Date()), weekRef=weekStart(new Date());
 let form=blank(), editingId=null;
-function blank(){return{c:false,h:false,p:false,s:false,f:false,b:false,n:false,before:null,after:null,reg:[],triggers:[],note:""}}
+function blank(){return{c:false,h:false,p:false,s:false,f:false,b:false,n:false,before:null,after:null,meal:null,reg:[],triggers:[],note:""}}
 $("today-line").textContent=fmtDay(new Date());
 
 /* ---------- Formular ---------- */
@@ -306,6 +311,9 @@ function renderForm(){
       crit.appendChild(w);
     }
   });
+  const mel=$("meal"); mel.innerHTML="";
+  MEALS.forEach(t=>{const x=document.createElement("button");x.type="button";x.className="chip";x.textContent=t;
+    x.setAttribute("aria-pressed",form.meal===t);x.onclick=()=>{form.meal=form.meal===t?null:t;renderForm()};mel.appendChild(x)});
   chipGroup("reg",REG,form.reg);
   chipGroup("trig",TRIG,form.triggers);
   const sc=scoreOf(form);
@@ -328,7 +336,7 @@ function resetForm(){form=blank();editingId=null;$("f-when").value=toInput(new D
 function editEntry(e){
   editingId=e.id;
   form=blank(); CRIT.forEach(c=>form[c.k]=!!e[c.k]);
-  form.before=e.before??null; form.after=e.after??null; form.reg=[...(e.reg||[])]; form.triggers=[...(e.triggers||[])]; form.note=e.note||"";
+  form.before=e.before??null; form.meal=e.meal??null; form.after=e.after??null; form.reg=[...(e.reg||[])]; form.triggers=[...(e.triggers||[])]; form.note=e.note||"";
   $("f-when").value=toInput(new Date(e.ts)); $("f-note").value=form.note; $("del-confirm").hidden=true;
   setView("add"); renderForm(); window.scrollTo({top:0});
 }
@@ -336,7 +344,7 @@ $("save").onclick=()=>{
   const when=$("f-when").value?new Date($("f-when").value):new Date();
   const sc=scoreOf(form);
   const body={id:editingId||newId(),ts:when.getTime(),date:dkey(when),time:`${pad(when.getHours())}:${pad(when.getMinutes())}`,
-    before:form.before,after:form.after,reg:form.reg,triggers:sc===MAX?[]:form.triggers,note:form.note.trim(),updated:Date.now()};
+    before:form.before,after:form.after,meal:form.meal,reg:form.reg,triggers:sc===MAX?[]:form.triggers,note:form.note.trim(),updated:Date.now()};
   CRIT.forEach(c=>body[c.k]=form[c.k]);
   const i=entries.findIndex(e=>e.id===body.id);
   if(i>=0)entries[i]=body; else entries.push(body);
@@ -368,7 +376,7 @@ function renderDay(){
       if(e.reg&&e.reg.length) meta.push("Reguliert: "+e.reg.map(esc).join(", "));
       if(e.triggers&&e.triggers.length) meta.push("Auslöser: "+e.triggers.map(esc).join(", "));
       if(e.note) meta.push(esc(e.note));
-      return `<button type="button" class="entry" data-id="${esc(e.id)}"><span class="time">${esc(e.time||"")}</span>
+      return `<button type="button" class="entry" data-id="${esc(e.id)}"><span class="time">${esc(e.time||"")}${e.meal?`<br><span class="meta" style="font-weight:400">${esc(e.meal)}</span>`:""}</span>
         <span style="display:flex;flex-direction:column;gap:6px;min-width:0">${lettersHTML(e)}${meta.length?`<span class="meta">${meta.join(" · ")}</span>`:""}</span>
         <span class="badge ${sc===MAX?"full":""}">${sc}/${MAX}</span></button>`}).join("")+`</div>`;
     h+=`<p class="hint" style="margin:0">Eintrag antippen, um ihn zu ändern oder zu löschen.</p>${newBtn}`;
@@ -411,6 +419,9 @@ function renderWeek(){
   }else h+=`<div class="callout good"><p>Alle sieben Kriterien bei jeder Mahlzeit erfüllt.</p></div>`;
   const tr=Object.entries(s.trig).sort((a,b)=>b[1]-a[1]);
   if(tr.length) h+=`<div><div class="label" style="margin-bottom:6px">Häufigste Auslöser</div><ul class="plain">${tr.map(([t,c])=>`<li>${esc(t)} <span class="num">${c}×</span></li>`).join("")}</ul></div>`;
+  const byMeal=MEALS.map(m=>{const l=s.list.filter(e=>e.meal===m);return{m,n:l.length,f:l.filter(e=>scoreOf(e)===MAX).length}}).filter(x=>x.n);
+  if(byMeal.length) h+=`<div><div class="label" style="margin-bottom:8px">${MAX}/${MAX} nach Mahlzeit</div><div class="bars">`+byMeal.map(x=>{const w=Math.round(x.f/x.n*100);
+    return `<div class="bar" style="grid-template-columns:96px 1fr auto"><span>${x.m}</span><div class="track"><div class="fill" style="width:${w}%"></div></div><span class="val">${x.f}/${x.n} · ${w} %</span></div>`}).join("")+`</div></div>`;
   h+=`<div><div class="label" style="margin-bottom:6px">${MAX}/${MAX} pro Tag</div><div class="days">`;
   for(let i=0;i<7;i++){const d=addDays(ws,i), l=inRange(d,addDays(d,1)), f=l.filter(e=>scoreOf(e)===MAX).length;
     h+=`<div class="day ${dkey(d)===dkey(new Date())?"today":""}">${WD[i]}<b>${l.length?`${f}/${l.length}`:"–"}</b></div>`}
