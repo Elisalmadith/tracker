@@ -360,7 +360,7 @@ function renderDay(){
   if(!list.length){body.innerHTML=`<div class="empty"><b>Noch keine Mahlzeit</b>Trag deine erste Mahlzeit ein.</div>${newBtn}`;}
   else{
     const full=list.filter(e=>scoreOf(e)===MAX).length, miss=missedList(list);
-    let h=`<div class="stats"><div class="stat gold"><div class="label">${MAX}/${MAX} geschafft</div><div class="v num">${full} von ${list.length}</div></div>
+    let h=`<div class="stats"><div class="stat gold"><div class="label">Mahlzeiten mit ${MAX}/${MAX}</div><div class="v num">${full} von ${list.length}</div><div class="hint">${full===list.length?"alle geschafft":list.length-full===1?"eine noch nicht":(list.length-full)+" noch nicht"}</div></div>
       <div class="stat"><div class="label">Gefehlt</div><div class="v" style="font-size:1.1rem;line-height:1.4;padding-top:6px">${miss.length?miss.map(m=>`${m.c.L} ${m.miss}×`).join(" · "):"nichts"}</div></div></div>`;
     h+=`<div class="crit">`+list.map(e=>{
       const sc=scoreOf(e), meta=[];
@@ -394,7 +394,7 @@ function renderWeek(){
   const body=$("w-body"), s=weekStats(ws);
   if(!s.n){body.innerHTML=`<div class="empty"><b>Keine Einträge in dieser Woche</b>Sobald du Mahlzeiten einträgst, siehst du hier deine Auswertung.</div>`;return}
   const pct=Math.round(s.full/s.n*100);
-  let h=`<div class="stats"><div class="stat gold"><div class="label">${MAX}/${MAX} geschafft</div><div class="v num">${s.full} von ${s.n}</div><div class="hint num">${pct} % der Mahlzeiten</div></div>`;
+  let h=`<div class="stats"><div class="stat gold"><div class="label">Mahlzeiten mit ${MAX}/${MAX}</div><div class="v num">${s.full} von ${s.n}</div><div class="hint num">${pct} % der Mahlzeiten</div></div>`;
   const prev=weekStats(addDays(ws,-7));
   if(prev.n){const pp=Math.round(prev.full/prev.n*100), d=pct-pp;
     h+=`<div class="stat"><div class="label">Vorwoche</div><div class="v num">${pp} %</div><div class="hint num">${d===0?"gleich":(d>0?"+":"")+d+" Punkte"}</div></div>`;
