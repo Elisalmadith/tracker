@@ -215,6 +215,7 @@ ul.plain{margin:0;padding-left:18px}
       <input type="file" id="imp-file" accept="application/json,.json" hidden>
     </div>
     <p class="hint" style="margin:0">Beim Laden werden Einträge ergänzt, vorhandene bleiben erhalten.</p>
+    <p class="hint num" style="margin:0" id="ver"></p>
   </section>
 </div>
 <div class="toast" id="toast" hidden></div>
@@ -231,8 +232,8 @@ const CRIT=[
 ];
 const MAX=CRIT.length;
 const MEALS=["Frühstück","Mittagessen","Abendessen","Snack"];
-const REG=["Atmen","Spaziergang","Akupressurmatte","Erden","Anderes"];
-const TRIG=["Stress","Gewohnheit","Müdigkeit","Gesellschaft","Anderes"];
+const REG=["Atmen","Meditation","Akupressurmatte","Spaziergang","Lesen","Anderes"];
+const TRIG=["Stress","Emotion","Runterkommen","Gewohnheit","Müde","Abgelenkt","Anderes"];
 const HS=[
   [0,"Ausgehungert","Ein körperlicher Notfall, Hunger wurde zu lange ignoriert. Kommt praktisch nie vor."],
   [1,"Intensiver Hunger","Der Magen knurrt anhaltend, Hunger wurde übergangen. Körperlich leer, der Körper braucht klar Nahrung."],
@@ -247,6 +248,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
+const APP_VERSION=6;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup";
 
 const $=id=>document.getElementById(id);
@@ -280,7 +282,7 @@ if(navigator.storage&&navigator.storage.persist){ navigator.storage.persist().ca
 let view="add", dayRef=startOfDay(new Date()), weekRef=weekStart(new Date());
 let form=blank(), editingId=null;
 function blank(){return{c:false,h:false,p:false,s:false,f:false,b:false,n:false,before:null,after:null,meal:null,reg:[],triggers:[],note:""}}
-$("today-line").textContent=fmtDay(new Date());
+$("today-line").textContent=fmtDay(new Date())+" · Version "+APP_VERSION;
 
 /* ---------- Formular ---------- */
 function renderForm(){
@@ -433,7 +435,7 @@ $("w-next").onclick=()=>{weekRef=addDays(weekRef,7);renderWeek()};
 
 /* ---------- Daten ---------- */
 function renderData(){
-  $("cnt").textContent=entries.length;
+  $("cnt").textContent=entries.length; $("ver").textContent="App-Version "+APP_VERSION;
   let last=null; try{last=localStorage.getItem(KEY_BK)}catch(e){}
   if(last){const days=Math.floor((Date.now()-Number(last))/864e5);$("last").textContent=days===0?"heute":days===1?"gestern":`vor ${days} Tagen`}
 }
@@ -478,7 +480,16 @@ let tt; function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clea
 $("hs").innerHTML=HS.filter(r=>r[0]<=7).map(r=>`<li class="${r[0]===2||r[0]===5?"ideal":""}"><span class="lv">${r[0]===7?"7–10":r[0]}</span><div><b>${r[0]===7?"Übervoll bis vollgestopft":r[1]}</b><p>${r[0]===7?"Mehr gegessen als der Körper braucht. Blähungen, Trägheit, eventuell Reue.":r[2]}</p></div></li>`).join("");
 
 resetForm();
-if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{})) }
+if("serviceWorker" in navigator){
+  let reloaded=false;
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{ if(!reloaded){reloaded=true;location.reload()} });
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(reg=>{
+      reg.update().catch(()=>{});
+      document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") reg.update().catch(()=>{}) });
+    }).catch(()=>{});
+  });
+}
 </script>
 </body>
 </html>
