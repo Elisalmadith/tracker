@@ -239,7 +239,7 @@ ul.plain{margin:0;padding-left:18px} ul.plain li+li{margin-top:4px}
 </head>
 <body>
 <div class="bgimg" aria-hidden="true"></div>
-<div class="splash" id="splash" role="img" aria-label="Free at last"><div class="lg"><div class="wm">FREE AT LAST</div><div class="hz"><span></span><svg viewBox="0 0 18 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M1 11 L7 3 L10 7 L12 5 L17 11"/></svg><span></span></div></div><div class="tap">Tippen zum Starten</div></div>
+<div class="splash" id="splash" role="img" aria-label="Free at last"><div class="lg"><div class="wm">FREE AT LAST</div><div class="hz"><span></span><svg viewBox="0 0 18 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M1 11 L7 3 L10 7 L12 5 L17 11"/></svg><span></span></div></div><div class="quote" id="sp-q"></div><div class="tap">Tippen zum Starten</div></div>
 <div class="sticky" id="sticky" aria-hidden="true" style="display:none!important"></div>
 <div class="wrap">
   <div class="seg nav2" role="group" aria-label="Bereich">
@@ -358,6 +358,7 @@ ul.plain{margin:0;padding-left:18px} ul.plain li+li{margin-top:4px}
 
   <!-- RUHESTAND -->
   <section class="panel" id="v-ruhe" hidden>
+    <div class="switch"><div><b>Vermögen erhalten</b><small>Nur so viel entnehmen, dass das Vermögen in heutiger Kaufkraft gleich bleibt. Aus: Bis zum Planungsende wird auch das Vermögen selbst verbraucht.</small></div><input type="checkbox" id="r-keep"></div>
     <div class="switch"><div><b>Entnahme im Ruhestand</b><small>Aus: das Vermögen wächst nach dem Sparende einfach weiter. „Frei ab“ wird immer mit Entnahme gerechnet.</small></div><input type="checkbox" id="r-on"></div>
     <div class="grid" id="r-fields">
       <div class="f"><label for="r-pension">Rente oder andere Einkünfte</label><div class="inp"><input id="r-pension" inputmode="decimal"><span>€/Monat</span></div><small>in heutigem Geld, nach Steuer</small></div>
@@ -698,7 +699,7 @@ function clampAll(){
   S.byAge=Math.min(Math.max(S.byAge,S.age+1),S.r.until);
   if(S.h.year && S.h.year<NOW_YEAR+1) S.h.year=NOW_YEAR+1;
 }
-[['church','church'],['h-on','h.on'],['h-count','h.count'],['r-on','r.on']].forEach(([id,path])=>{
+[['church','church'],['h-on','h.on'],['h-count','h.count'],['r-on','r.on'],['r-keep','r.keep']].forEach(([id,path])=>{
   const el=$(id); el.checked=!!getP(path);
   el.addEventListener('change',()=>{ setP(path,el.checked); update(); });
 });
@@ -737,7 +738,10 @@ function sustainableNeed(){
 
 function freeAge(o){
   const ret=Object.assign({},S.r,{on:true});
-  for(let a=S.age;a<=80;a++){ if(simulate(Object.assign({},o||{},{saveUntil:a,ret})).depleted==null) return a; }
+  for(let a=S.age;a<=80;a++){ const sim=simulate(Object.assign({},o||{},{saveUntil:a,ret}));
+    if(sim.depleted!=null) continue;
+    if(S.r.keep){ const r0=sim.rows.find(r=>r.age===a)||{real:S.start}, rE=sim.rows[sim.rows.length-1]; if(rE.real < (a===S.age? S.start : r0.real)*0.999) continue; }
+    return a; }
   return null;
 }
 
@@ -751,7 +755,7 @@ lev.until.addEventListener('input',()=>{ S.saveUntil=+lev.until.value; clampAll(
 lev.need.addEventListener('input',()=>{ S.r.need=+lev.need.value; update(); });
 function syncInputs(){
   fields.forEach(([id,path,kind])=>{ const el=$(id); if(document.activeElement!==el){ const v=getP(path); el.value=(path.startsWith('h.')&&!v)?'':fmtField(v,kind); } });
-  [['church','church'],['h-on','h.on'],['h-count','h.count'],['r-on','r.on']].forEach(([id,p])=>{$(id).checked=!!getP(p);});
+  [['church','church'],['h-on','h.on'],['h-count','h.count'],['r-on','r.on'],['r-keep','r.keep']].forEach(([id,p])=>{$(id).checked=!!getP(p);});
   alloc.value=S.alloc;
   lev.save.value=Math.round(S.save); lev.ret.value=avgRet(); lev.until.min=S.age+1; lev.until.value=S.saveUntil; lev.need.value=S.r.need; lev.goal.value=S.goal; $('l-goal-v').textContent=eur(S.goal);
   $('l-save-v').textContent=eurExact(S.save); $('l-ret-v').textContent='Ø '+nf1.format(Math.round(avgRet()*100)/100)+' %';
@@ -819,10 +823,10 @@ function update(){
   const fa=freeAge(), hero=$('hero');
   if(fa===S.age){ hero.classList.remove('miss');
     $('hero-big').innerHTML=`<em>schon heute</em>`;
-    $('hero-sub').textContent=`Dein Vermögen trägt schon jetzt ${eurExact(S.r.need)} im Monat, bis ${S.r.until}.`;
+    $('hero-sub').textContent= S.r.keep? `Dein Vermögen trägt schon jetzt ${eurExact(S.r.need)} im Monat, ohne dass es kleiner wird.` : `Dein Vermögen trägt schon jetzt ${eurExact(S.r.need)} im Monat, bis ${S.r.until}.`;
   } else if(fa){ hero.classList.remove('miss');
     $('hero-big').innerHTML=`<em>${fa}</em> Jahren`;
-    $('hero-sub').textContent=`Ab ${NOW_YEAR+fa-S.age} trägt dein Vermögen ${eurExact(S.r.need)} im Monat, bis ${S.r.until}.`;
+    $('hero-sub').textContent= S.r.keep? `Ab ${NOW_YEAR+fa-S.age} trägt dein Vermögen ${eurExact(S.r.need)} im Monat, ohne dass es kleiner wird.` : `Ab ${NOW_YEAR+fa-S.age} trägt dein Vermögen ${eurExact(S.r.need)} im Monat, bis ${S.r.until}.`;
   } else { hero.classList.add('miss');
     $('hero-big').innerHTML=`<em>noch offen</em>`;
     $('hero-sub').textContent=`Für ${eurExact(S.r.need)} im Monat braucht es noch etwas mehr. Sparrate, Sparende oder Bedarf bringen dich hin.`; }
@@ -1235,7 +1239,13 @@ $('sq-take').onclick=()=>{ const ms=yearMonths(aYear), n=ms.length; if(!n) retur
 
 function applyNav(){ document.body.classList.remove('nav-glass'); document.body.classList.add('nav-dock'); }
 applyNav();
-(function(){ const sp=$('splash'); let done=false; const hide=()=>{ if(done) return; done=true; sp.classList.add('gone'); setTimeout(()=>sp.remove(),800); };
+(function(){ const Q=['Jeder Schritt zählt, auch die kleinen.','Freiheit ist kein Ziel, sondern ein Weg.','Der Ausblick lohnt den Aufstieg.','Heute ein Stück näher.','Geld ist Zeit, die dir gehört.','Wer den Gipfel kennt, geht ruhiger.','Langsam ist auch eine Geschwindigkeit.','Du baust dir gerade deine Freiheit.'];
+  $('sp-q').textContent=Q[Math.floor(Math.random()*Q.length)]; })();
+function countUp(){ const el=$('hero-big').querySelector('em'); if(!el) return; const to=parseInt(el.textContent,10); if(!(to>0)) return;
+  const from=Math.min(AGE_TODAY,to), t0=performance.now(), dur=1100;
+  const step=t=>{ const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3); el.textContent=Math.round(from+(to-from)*e); if(k<1) requestAnimationFrame(step); };
+  if(to>from){ el.textContent=from; requestAnimationFrame(step); } }
+(function(){ const sp=$('splash'); let done=false; const hide=()=>{ if(done) return; done=true; sp.classList.add('gone'); setTimeout(()=>sp.remove(),800); setTimeout(countUp,250); };
   sp.addEventListener('click',hide); })();
 clampAll(); update(); renderEnt(); buildFix(); renderAus();
 if(location.hash==='#entnahmen') showPart('ent'); if(location.hash==='#ausgaben') showPart('aus');
@@ -1284,6 +1294,7 @@ body{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
 .splash .hz{display:flex;align-items:center;gap:10px;margin-top:6px;color:#1D2620}
 .splash .hz span{flex:1;height:1.6px;background:#1D2620;border-radius:1px}
 .splash .hz svg{width:24px;height:16px}
+.splash .quote{margin-top:22px;font-size:.95rem;color:#1D2620;opacity:.8;text-align:center;padding:0 32px;max-width:360px}
 .splash .tap{position:absolute;bottom:calc(28px + env(safe-area-inset-bottom,0px));font-size:.8rem;color:rgba(255,255,255,.85);letter-spacing:.06em}
 body.nav-glass .nav2{background:rgba(255,255,255,.3);-webkit-backdrop-filter:blur(22px) saturate(1.8);backdrop-filter:blur(22px) saturate(1.8);border:1px solid rgba(255,255,255,.7);box-shadow:0 12px 32px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.85)}
 body.nav-glass .nav2 button{color:#1D2620;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.78rem;padding:7px 4px;border-radius:999px}
