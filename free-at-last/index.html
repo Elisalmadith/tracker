@@ -54,7 +54,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .hero{display:flex;flex-direction:column;gap:4px}
 .hero .big{font-family:var(--f-display);font-size:2.4rem;line-height:1.05;font-weight:600;letter-spacing:-.02em}
 .hero .big em{font-style:normal;color:var(--accent)}
-.hero.miss .big em{color:var(--danger)}
+.hero.miss .big em{color:var(--gold)}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .stat{background:var(--bg);border-radius:12px;padding:12px;min-width:0}
 .stat .v{font-family:var(--f-display);font-weight:600;letter-spacing:-.01em;font-size:1.4rem;line-height:1.15;font-variant-numeric:tabular-nums}
@@ -120,7 +120,7 @@ details .grid{margin-top:12px}
 .wf .r .val{font-variant-numeric:tabular-nums;font-weight:700;text-align:right}
 .wf .track{grid-column:1/-1;height:8px;border-radius:999px;background:var(--bg);overflow:hidden}
 .wf .fill{height:100%;border-radius:999px;background:var(--accent)}
-.wf .fill.g{background:var(--gold)} .wf .fill.n{background:var(--danger)} .wf .fill.m{background:var(--muted)}
+.wf .fill.g{background:var(--gold)} .wf .fill.n{background:#9AA29B} .wf .fill.m{background:var(--muted)}
 .wf .sum{border-top:1px solid var(--line);padding-top:8px}
 .nav2{display:grid;grid-template-columns:1fr 1fr 1fr}
 .nav2 button{padding:10px 8px;font-size:.95rem}
@@ -187,9 +187,15 @@ details .grid{margin-top:12px}
 .tl .dot{width:12px;height:12px;border-radius:50%;background:var(--surface);border:2px solid var(--accent);margin-top:5px}
 .tl li.key .dot{background:var(--accent)}
 .tl li.gold .dot{background:var(--gold);border-color:var(--gold)}
+.tl li.done .dot{width:28px;height:28px;margin:-3px 0 0 -8px;background:var(--gold);border-color:var(--gold);color:#fff;display:grid;place-items:center;position:relative;z-index:1}
+.tl li.done .dot svg{width:15px;height:15px}
+.tl li.done b{color:var(--gold)}
+@keyframes glow{0%{box-shadow:0 0 0 0 rgba(160,116,42,.55)}70%{box-shadow:0 0 0 14px rgba(160,116,42,0)}100%{box-shadow:0 0 0 0 rgba(160,116,42,0)}}
+.tl li.glow .dot{animation:glow 1.6s ease-out 3}
 .tl li.goal .dot{width:28px;height:28px;margin:-3px 0 0 -8px;background:var(--gold);border-color:var(--gold);color:#fff;display:grid;place-items:center;position:relative;z-index:1}
 .tl li.goal .dot svg{width:16px;height:11px}
-.tl li.warn .dot{background:var(--danger);border-color:var(--danger)}
+.tl li.warn .dot{background:var(--surface)!important;border-color:var(--gold)!important;border-style:dashed!important;}
+.tl li.warn-x .dot{background:var(--danger);border-color:var(--danger)}
 .tl .w b{display:block}
 .tl .w small{color:var(--muted)}
 .tl .y{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.88rem;text-align:right}
@@ -210,7 +216,7 @@ details .grid{margin-top:12px}
 .hr{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.95rem}
 .hr b{font-variant-numeric:tabular-nums;text-align:right}
 .hr small{font-weight:400;display:block;font-size:.8rem}
-.hwarn{margin:8px 0 0;color:var(--danger);font-size:.88rem}
+.hwarn{margin:8px 0 0;color:var(--gold);font-size:.88rem}
 .empty{color:var(--muted);font-size:.9rem;padding:6px 0;margin:0}
 
 /* Tabelle */
@@ -780,15 +786,22 @@ function renderMilestones(base, fa, hit){
   items.push({age:AGE_TODAY, y:NOW_YEAR, t:'Heute', s:'Vermögen '+eur(S.start), cls:'key'});
   const rows=base.rows;
   const startReal=S.start-Math.min(S.startGain,S.start*S.alloc/100)*0.7*taxRate();
+  const done=[1e6,2e6,3e6,5e6].filter(m=>m<=startReal && (!S.goal||m<S.goal));
+  if(S.goal && startReal>=S.goal) done.push(S.goal);
+  if(fa===S.age) done.push('frei');
+  if(done.length){ const lbl=done.filter(d=>d!=='frei').map(d=>eur(d)); const parts=[]; if(lbl.length) parts.push(lbl.join(', ')); if(done.includes('frei')) parts.push('finanzielle Freiheit');
+    items.push({age:AGE_TODAY,y:NOW_YEAR,t:'Geschafft',s:parts.join(' · '),cls:'done',key:'done:'+done.join('|')}); }
   [1e6,2e6,3e6,5e6].forEach(m=>{ if((S.goal && m>=S.goal) || m<=startReal) return; const r=rows.find(r=>r.real>=m && r.age<=S.saveUntil+30); if(r) items.push({age:r.age,y:r.cal,t:eur(m)+' erreicht',s:'heutige Kaufkraft, nach Steuer'}); });
   if(S.h.on && S.h.price>0 && S.h.year>NOW_YEAR){ const a=S.age+(S.h.year-NOW_YEAR); items.push({age:a,y:S.h.year,t:'Hauskauf',s:'Eigenkapital '+eur(S.h.ek)+' aus dem Depot',cls:'gold'}); }
-  if(hit) items.push({age:hit.age,y:hit.cal,t:'Ziel '+eur(S.goal)+' erreicht',s:'heutige Kaufkraft, nach Steuer',cls:'goal'});
-  if(fa) items.push({age:fa,y:NOW_YEAR+fa-S.age,t:'Finanziell frei',s:(fa>S.saveUntil?`wenn du bis dahin weiter sparst. Dann trägt das Vermögen ${eurExact(S.r.need)} im Monat`:`ab hier trägt das Vermögen ${eurExact(S.r.need)} im Monat`),cls:'key'});
+  if(hit && !(S.goal && startReal>=S.goal)) items.push({age:hit.age,y:hit.cal,t:'Ziel '+eur(S.goal)+' erreicht',s:'heutige Kaufkraft, nach Steuer',cls:'goal'});
+  if(fa && fa!==S.age) items.push({age:fa,y:NOW_YEAR+fa-S.age,t:'Finanziell frei',s:(fa>S.saveUntil?`wenn du bis dahin weiter sparst. Dann trägt das Vermögen ${eurExact(S.r.need)} im Monat`:`ab hier trägt das Vermögen ${eurExact(S.r.need)} im Monat`),cls:'key'});
   items.push({age:S.saveUntil,y:NOW_YEAR+S.saveUntil-S.age,t:'Sparende',s:S.r.on?'danach Entnahme '+eurExact(S.r.need)+' im Monat':'danach wächst das Vermögen weiter'});
-  if(S.r.on && base.depleted) items.push({age:base.depleted,y:NOW_YEAR+base.depleted-S.age,t:'Vermögen aufgebraucht',s:'bei diesem Bedarf',cls:'warn'});
+  if(S.r.on && base.depleted) items.push({age:base.depleted,y:NOW_YEAR+base.depleted-S.age,t:'Hier wird es knapp',s:'bis hier reicht das Vermögen bei diesem Bedarf',cls:'warn'});
   else if(S.r.on) items.push({age:S.r.until,y:NOW_YEAR+S.r.until-S.age,t:'Planungsende',s:'Vermögen reicht bis hier'});
   items.sort((a,b)=>a.age-b.age);
-  $('tl').innerHTML=items.map(i=>`<li class="${i.cls||''}"><span class="dot">${i.cls==='goal'?'<svg viewBox="0 0 18 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M1 11 L7 3 L10 7 L12 5 L17 11"/></svg>':''}</span><span class="w"><b>${i.t}</b><small>${i.s}</small></span><span class="y">${i.y}<br>mit ${i.age}</span></li>`).join('');
+  items.forEach(i=>{ i.cls=i.cls||''; });
+  const seen=new Set(S.seenDone||[]); let fresh=false; items.forEach(i=>{ if(i.key && !seen.has(i.key)){ i.cls+=' glow'; fresh=true; seen.add(i.key); } }); if(fresh){ S.seenDone=[...seen]; save(); }
+  $('tl').innerHTML=items.map(i=>`<li class="${i.cls||''}"><span class="dot">${i.cls.startsWith('done')?'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg>':''}${i.cls==='goal'?'<svg viewBox="0 0 18 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M1 11 L7 3 L10 7 L12 5 L17 11"/></svg>':''}</span><span class="w"><b>${i.t}</b><small>${i.s}</small></span><span class="y">${i.y}<br>mit ${i.age}</span></li>`).join('');
 }
 
 /* ---------- Update ---------- */
@@ -811,17 +824,17 @@ function update(){
     $('hero-big').innerHTML=`<em>${fa}</em> Jahren`;
     $('hero-sub').textContent=`Ab ${NOW_YEAR+fa-S.age} trägt dein Vermögen ${eurExact(S.r.need)} im Monat, bis ${S.r.until}.`;
   } else { hero.classList.add('miss');
-    $('hero-big').innerHTML=`<em>nicht vor 80</em>`;
-    $('hero-sub').textContent=`Für ${eurExact(S.r.need)} im Monat reicht es mit diesen Werten nicht. Dreh an Sparrate oder Bedarf.`; }
+    $('hero-big').innerHTML=`<em>noch offen</em>`;
+    $('hero-sub').textContent=`Für ${eurExact(S.r.need)} im Monat braucht es noch etwas mehr. Sparrate, Sparende oder Bedarf bringen dich hin.`; }
   { $('gl-goal').textContent=eur(S.goal);
     if(hit) $('gl-val').textContent=`${hit.cal}, mit ${hit.age}`;
-    else { const best=base.rows.reduce((m,r)=>r.real>m.real?r:m, base.rows[0]); $('gl-val').textContent='nicht erreicht'; }
+    else { const best=base.rows.reduce((m,r)=>r.real>m.real?r:m, base.rows[0]); $('gl-val').textContent=`noch ${eur(Math.max(0,S.goal-best.real))} entfernt`; }
     const startReal=S.start-Math.min(S.startGain,S.start*S.alloc/100)*0.7*taxRate();
     const pr=Math.max(0,Math.min(1,startReal/S.goal)); $('pg-fill').style.width=(pr*100)+'%';
     $('pg-txt').textContent=`Heute ${eur(startReal)} · ${Math.round(pr*100)} % vom Ziel`;
     $('s1-h').textContent=`Mit ${S.saveUntil}, Sparende`;
     $('s1-v').textContent=eur(atRet.real); $('s1-n').textContent=`nominal ${eur(atRet.net)}`;
-    const w=$('s1-w'); if(S.r.on && base.depleted){ w.hidden=false; w.textContent=`Bei diesem Bedarf ist das Vermögen mit ${base.depleted} aufgebraucht.`; } else w.hidden=true; }
+    const w=$('s1-w'); if(S.r.on && base.depleted){ w.hidden=false; w.textContent=`Mit diesem Bedarf reicht das Vermögen bis ${base.depleted}. Etwas länger sparen oder etwas weniger entnehmen schließt die Lücke.`; } else w.hidden=true; }
 
   // Sticky
   sticky.textContent = (fa? `Frei ab ${fa}` : 'Frei nicht vor 80') + ' · ' + (hit? `Ziel ${hit.cal}` : 'Ziel nicht erreicht');
@@ -832,8 +845,8 @@ function update(){
     const faN=freeAge({noHouse:true}), atN=rowAt(noH.rows,S.saveUntil), diff=atN.real-atRet.real;
     let txt;
     if(fa && faN) txt = fa>faN ? `Das Haus kostet dich <b>${fa-faN} Jahre</b> Freiheit (ohne Haus frei ab ${faN}).` : `Das Haus verschiebt deine Freiheit nicht.`;
-    else if(!fa && faN) txt = `Ohne Haus wärst du ab ${faN} frei, mit Haus nicht vor 80.`;
-    else txt = `Auch ohne Haus reicht es nicht vor 80.`;
+    else if(!fa && faN) txt = `Ohne Haus wärst du mit ${faN} frei.`;
+    else txt = `Mit und ohne Haus braucht es noch etwas mehr bis zur Freiheit.`;
     txt += ` Mit ${S.saveUntil} hast du ${eur(Math.abs(diff))} ${diff>=0?'weniger':'mehr'} Geld zur Verfügung${S.h.count?'':', das Haus selbst nicht mitgezählt'}.`;
     hi2.innerHTML='<p>'+txt+'</p>'; hi2.hidden=false;
   } else hi2.hidden=true;
@@ -866,8 +879,8 @@ function update(){
   else {
     const firstWd=base.rows.find(r=>r.wd>0);
     const sus=sustainableNeed();
-    rsum.className='callout'+(base.depleted?' warn':'');
-    rsum.innerHTML = (base.depleted? `<p>Bei ${eurExact(S.r.need)} im Monat ist das Vermögen <b>mit ${base.depleted} aufgebraucht</b>.</p>`
+    rsum.className='callout'+(base.depleted?' gold':'');
+    rsum.innerHTML = (base.depleted? `<p>Bei ${eurExact(S.r.need)} im Monat <b>reicht das Vermögen bis ${base.depleted}</b>.</p>`
                                   : `<p>Bei ${eurExact(S.r.need)} im Monat <b>reicht das Vermögen bis ${S.r.until}</b>.</p>`)+
       `<p>Höchstens möglich, damit es bis ${S.r.until} reicht: <b>${eurExact(Math.floor(sus/100)*100)} im Monat</b> in heutigem Geld.</p>`+
       (firstWd? `<p>Im ersten Ruhestandsjahr (${firstWd.cal}) sind das nominal ${eurExact(firstWd.wd/12)} im Monat, weil die Preise bis dahin gestiegen sind.</p>`:'');
