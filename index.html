@@ -66,6 +66,8 @@ header h1 em{color:#E7F0E2}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:14px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .between{justify-content:space-between}
+input[type="datetime-local"]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;min-height:44px;text-align:left}
+input[type="datetime-local"]::-webkit-date-and-time-value{text-align:left}
 input[type="datetime-local"],textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
 textarea{min-height:64px;resize:vertical}
 
@@ -140,7 +142,13 @@ summary{font-weight:700;cursor:pointer}
 .empty{color:var(--muted);text-align:center;padding:18px 8px}
 .empty b{display:block;color:var(--ink);font-family:var(--f-display);font-size:1.2rem;font-weight:500;margin-bottom:4px}
 header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.akut-btn{flex:none;border:1.5px solid var(--gold);background:var(--gold-soft);color:var(--ink);border-radius:999px;padding:9px 16px;font-weight:700;margin-top:4px}
+.akut-btn{flex:none;margin-top:4px;padding:10px 20px;border-radius:999px;font-weight:700;letter-spacing:.02em;color:#fff;
+  background:linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,.12));
+  -webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);
+  border:1px solid rgba(255,255,255,.5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -1px 1px rgba(255,255,255,.18),0 8px 24px rgba(0,0,0,.22);
+  text-shadow:0 1px 3px rgba(0,0,0,.35)}
+.akut-btn:active{transform:scale(.97)}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .tile{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:14px 12px;text-align:left;font-weight:700;min-height:56px}
 .tile.soft{font-weight:400;color:var(--muted)}
@@ -409,7 +417,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=14;
+const APP_VERSION=15;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
