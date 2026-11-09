@@ -124,6 +124,22 @@ summary{font-weight:700;cursor:pointer}
 .day.today{outline:1.5px solid var(--accent)}
 .empty{color:var(--muted);text-align:center;padding:18px 8px}
 .empty b{display:block;color:var(--ink);font-family:var(--f-display);font-size:1.2rem;font-weight:500;margin-bottom:4px}
+.track14{display:flex;flex-direction:column;gap:10px}
+.dots{display:grid;grid-template-columns:repeat(14,1fr);gap:4px}
+.dot{aspect-ratio:1;max-width:100%;border-radius:50%;border:1.5px dashed var(--line);background:transparent;padding:0}
+.dot.t{background:var(--accent);border:1.5px solid var(--accent)}
+.dot.r-gut{background:var(--accent-soft);border:1.5px solid var(--accent)}
+.dot.r-gemischt{background:var(--gold-soft);border:1.5px solid var(--gold)}
+.dot.r-schwer{background:var(--danger-soft);border:1.5px solid var(--danger)}
+.dot.now{border:1.5px solid var(--ink)}
+.dot.off{visibility:hidden}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.78rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.prompt{display:flex;flex-direction:column;gap:10px}
+.day.r-gut b{color:var(--accent)} .day.r-gemischt b{color:var(--gold)} .day.r-schwer b{color:var(--danger)}
+.day.gapday{border:1px dashed var(--line)}
+.wk{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .banner{border-radius:12px;padding:12px 14px;background:var(--gold-soft);color:var(--ink);font-size:.92rem}
 ul.plain{margin:0;padding-left:18px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:700;z-index:20;max-width:calc(100% - 32px);text-align:center}
@@ -146,6 +162,45 @@ ul.plain{margin:0;padding-left:18px}
   </div>
 
   <div class="banner" id="banner" hidden></div>
+
+  <section class="panel track14" id="track" hidden>
+    <div class="row between"><span class="label">Letzte 14 Tage</span><span class="hint num" id="track-sum"></span></div>
+    <div class="dots" id="dots"></div>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>getrackt</span>
+      <span><i style="background:var(--accent-soft);border:1px solid var(--accent)"></i>gut</span>
+      <span><i style="background:var(--gold-soft);border:1px solid var(--gold)"></i>gemischt</span>
+      <span><i style="background:var(--danger-soft);border:1px solid var(--danger)"></i>schwer</span>
+      <span><i style="border:1px dashed var(--muted)"></i>offen</span>
+    </div>
+    <div class="prompt" id="gap-prompt" hidden>
+      <p style="margin:0" id="gap-text">Gestern fehlt noch. Magst du kurz einordnen, wie er war?</p>
+      <div class="row"><button type="button" class="btn" id="gap-yes">Einordnen</button><button type="button" class="btn ghost" id="gap-no">Überspringen</button></div>
+    </div>
+  </section>
+
+  <section id="v-fill" class="panel" hidden>
+    <div class="row between"><h2 id="fill-title">Tag nachtragen</h2></div>
+    <p class="hint" style="margin:0">Du musst keine Mahlzeiten rekonstruieren. Eine ehrliche Einordnung reicht.</p>
+    <div>
+      <div class="label" style="margin-bottom:6px">Wie war der Tag mit dem Essen?</div>
+      <div class="chips" id="fill-rate"></div>
+    </div>
+    <div>
+      <div class="label" style="margin-bottom:6px">Was war los? (optional)</div>
+      <div class="chips" id="fill-why"></div>
+    </div>
+    <div class="row"><button type="button" class="chip" id="fill-pms" aria-pressed="false">PMS-Tag</button></div>
+    <div>
+      <label class="label" for="fill-note">Notiz (optional)</label>
+      <textarea id="fill-note" placeholder="Was möchtest du dir merken?"></textarea>
+    </div>
+    <div class="row">
+      <button type="button" class="btn" id="fill-save">Speichern</button>
+      <button type="button" class="btn ghost" id="fill-cancel">Abbrechen</button>
+      <button type="button" class="btn warn" id="fill-del" hidden>Einordnung entfernen</button>
+    </div>
+  </section>
 
   <section id="v-add" class="panel">
     <div class="row between">
@@ -258,7 +313,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=10;
+const APP_VERSION=11;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -289,7 +344,18 @@ let days={};
 try{ const rd=localStorage.getItem(KEY_DAYS); days=rd?JSON.parse(rd):{}; if(!days||typeof days!=="object")days={} }catch(e){ days={} }
 function persistDays(){ try{ localStorage.setItem(KEY_DAYS,JSON.stringify(days)); return true }catch(e){ showBanner("Speichern auf diesem Gerät ist gerade nicht möglich."); return false } }
 const isPms=k=>!!(days[k]&&days[k].pms);
-function togglePms(k){ const d={...(days[k]||{})}; d.pms=!d.pms; if(d.pms)days[k]=d; else delete days[k]; persistDays() }
+function setDay(k,patch){ const d={...(days[k]||{}),...patch}; Object.keys(d).forEach(x=>{ if(d[x]===false||d[x]==null||(Array.isArray(d[x])&&!d[x].length)||d[x]==="") delete d[x] }); if(Object.keys(d).length)days[k]=d; else delete days[k]; return persistDays() }
+function togglePms(k){ setDay(k,{pms:!isPms(k)}) }
+const RATES=[["gut","Gut"],["gemischt","Gemischt"],["schwer","Schwer"]];
+const FILL_WHY=[...SHARED,"Vorsorglich","Abgelenkt","Langeweile","Belohnung","Unterwegs","Anderes"];
+const KEY_SKIP="tenten.gapSkip";
+const hasMeals=k=>entries.some(e=>(e.date||dkey(new Date(e.ts)))===k);
+const rating=k=>days[k]&&days[k].rating||null;
+const dayState=k=>hasMeals(k)?"t":rating(k)?("r-"+rating(k)):"open";
+function firstDay(){
+  const ks=[...entries.map(e=>e.date||dkey(new Date(e.ts))),...Object.keys(days).filter(k=>days[k].rating)].sort();
+  return ks.length?ks[0]:null;
+}
 function showBanner(t){const b=$("banner");b.textContent=t;b.hidden=false}
 load();
 if(!storageOk) showBanner("Speichern auf diesem Gerät ist gerade nicht möglich. Ist der private Modus aktiv?");
@@ -368,7 +434,7 @@ function refreshWhen(){ if(!editingId&&!whenTouched){ $("f-when").value=toInput(
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"){ refreshWhen(); if(view==="add")renderForm() } });
 function renderSince(){
   const now=Date.now(), past=entries.filter(e=>e.ts<=now).sort((a,b)=>b.ts-a.ts)[0];
-  $("since").textContent=(!editingId&&past)?`Letzte Mahlzeit vor ${fmtDur(now-past.ts)}`:"";
+  $("since").textContent=(!editingId&&past)?(now-past.ts<864e5?`Letzte Mahlzeit vor ${fmtDur(now-past.ts)}`:`Letzte Mahlzeit: ${fmtDay(new Date(past.ts))}`):"";
 }
 setInterval(()=>{ refreshWhen(); if(view==="add")renderSince(); if(view==="day")renderDay() },60000);
 function chipGroup(id,list,arr){
@@ -401,12 +467,12 @@ $("save").onclick=()=>{
   CRIT.forEach(c=>body[c.k]=form[c.k]);
   const i=entries.findIndex(e=>e.id===body.id);
   if(i>=0)entries[i]=body; else entries.push(body);
-  if(persist()){ toast(`Gespeichert · ${sc}/${MAX}`); dayRef=startOfDay(when); resetForm(); }
+  if(persist()){ renderTrack(); toast(`Gespeichert · ${sc}/${MAX}`); dayRef=startOfDay(when); resetForm(); }
 };
 $("cancel").onclick=resetForm;
 $("del").onclick=()=>{$("del-confirm").hidden=false};
 $("del-no").onclick=()=>{$("del-confirm").hidden=true};
-$("del-yes").onclick=()=>{ entries=entries.filter(e=>e.id!==editingId); if(persist()){toast("Gelöscht");resetForm()} };
+$("del-yes").onclick=()=>{ entries=entries.filter(e=>e.id!==editingId); if(persist()){renderTrack();toast("Gelöscht");resetForm()} };
 
 /* ---------- Tag ---------- */
 function inRange(a,b){return entries.filter(e=>e.ts>=a.getTime()&&e.ts<b.getTime()).sort((x,y)=>x.ts-y.ts)}
@@ -419,7 +485,13 @@ function renderDay(){
   $("d-pms").setAttribute("aria-pressed",isPms(dkey(dayRef)));
   const list=inRange(dayRef,addDays(dayRef,1)), body=$("d-body");
   const newBtn=`<button type="button" class="btn" id="d-new">Neue Mahlzeit eintragen</button>`;
-  if(!list.length){body.innerHTML=`<div class="empty"><b>Noch keine Mahlzeit</b>Trag deine erste Mahlzeit ein.</div>${newBtn}`;}
+  if(!list.length){
+    const k=dkey(dayRef), r=rating(k), d=days[k]||{};
+    const info=r?`<div class="callout ${r==="gut"?"good":""}" style="${r==="gemischt"?"background:var(--gold-soft)":""}"><p><b>Nachgetragen: ${RATES.find(x=>x[0]===r)[1]}</b>${d.why&&d.why.length?`<br>${d.why.map(esc).join(", ")}`:""}${d.note?`<br>${esc(d.note)}`:""}</p></div>`
+      :`<div class="empty"><b>${isToday?"Noch keine Mahlzeit":"Nicht getrackt"}</b>${isToday?"Trag deine erste Mahlzeit ein.":"Du kannst den Tag kurz einordnen, ohne Mahlzeiten nachzutragen."}</div>`;
+    body.innerHTML=info+`<div class="row">${newBtn}${isToday?"":`<button type="button" class="btn ghost" id="d-fill">${r?"Einordnung ändern":"Tag einordnen"}</button>`}</div>`;
+    if(!isToday) $("d-fill").onclick=()=>openFill(k);
+  }
   else{
     const full=list.filter(e=>scoreOf(e)===MAX).length, miss=missedList(list);
     let h=`<div class="stats"><div class="stat gold"><div class="label">Mahlzeiten mit ${MAX}/${MAX}</div><div class="v num">${full} von ${list.length}</div><div class="hint">${full===list.length?"alle geschafft":list.length-full===1?"eine noch nicht":(list.length-full)+" noch nicht"}</div></div>
@@ -455,19 +527,39 @@ function weekStats(ws){
   return{list,n,full,per,whyH:cnt("whyH"),whyB:cnt("whyB"),feel:cnt("feelings"),trig:cnt("triggers"),
     missH:list.filter(e=>!e.h).length,missB:list.filter(e=>!e.b).length};
 }
+function coverage(ws){
+  const fd=firstDay(), tk=dkey(new Date()); let t=0,r={gut:0,gemischt:0,schwer:0},open=0,n=0;
+  for(let i=0;i<7;i++){const k=dkey(addDays(ws,i)); if(!fd||k<fd||k>tk)continue; const st=dayState(k);
+    if(k===tk&&st==="open")continue; n++; if(st==="t")t++; else if(st==="open")open++; else r[rating(k)]++}
+  if(!n) return {html:""};
+  const rated=r.gut+r.gemischt+r.schwer, miss=rated+open;
+  const parts=[]; if(r.schwer)parts.push(`${r.schwer} schwer`); if(r.gemischt)parts.push(`${r.gemischt} gemischt`); if(r.gut)parts.push(`${r.gut} gut`); if(open)parts.push(`${open} offen`);
+  const html=`<div class="callout ${miss?"":"good"}" style="${miss?"background:var(--bg)":""}"><p><b>${t} von ${n} Tagen mit Mahlzeiten getrackt.</b>${miss?` ${miss} ${miss===1?"Tag":"Tage"} ohne Tracking: ${parts.join(", ")}.`:" Keine Lücke."}</p></div>`;
+  return {html};
+}
+function gapPattern(){
+  const fd=firstDay(); if(!fd) return "";
+  const today=startOfDay(new Date()), cnt=[0,0,0,0,0,0,0], hard=[0,0,0,0,0,0,0]; let tot=0,pms=0;
+  for(let i=1;i<=56;i++){const d=addDays(today,-i),k=dkey(d); if(k<fd)break; const st=dayState(k);
+    if(st!=="t"){const w=(d.getDay()+6)%7; cnt[w]++; tot++; if(st==="r-schwer")hard[w]++; if(isPms(k))pms++}}
+  if(tot<2) return "";
+  return `<div><div class="label" style="margin-bottom:6px">Lücken der letzten 8 Wochen nach Wochentag</div><div class="wk">${WD.map((w,i)=>`<div class="day">${w}<b>${cnt[i]||"–"}</b></div>`).join("")}</div>
+    <p class="hint" style="margin:6px 0 0">${tot} Tage ohne Mahlzeiten-Tracking${pms?`, davon ${pms} an PMS-Tagen`:""}.</p></div>`;
+}
 function renderWeek(){
   const ws=weekRef, we=addDays(ws,6), isCur=dkey(ws)===dkey(weekStart(new Date()));
   $("w-title").textContent=isCur?"Diese Woche":`${fmtShort(ws)} – ${fmtShort(we)}`;
   $("w-next").disabled=isCur;
   const body=$("w-body"), s=weekStats(ws);
-  if(!s.n){body.innerHTML=`<div class="empty"><b>Keine Einträge in dieser Woche</b>Sobald du Mahlzeiten einträgst, siehst du hier deine Auswertung.</div>`;return}
+  const cov=coverage(ws);
+  if(!s.n){body.innerHTML=cov.html+`<div class="empty"><b>Keine Mahlzeiten in dieser Woche getrackt</b>Sobald du Mahlzeiten einträgst, siehst du hier deine Auswertung.</div>`+gapPattern();return}
   const pct=Math.round(s.full/s.n*100);
   let h=`<div class="stats"><div class="stat gold"><div class="label">Mahlzeiten mit ${MAX}/${MAX}</div><div class="v num">${s.full} von ${s.n}</div><div class="hint num">${pct} % der Mahlzeiten</div></div>`;
   const prev=weekStats(addDays(ws,-7));
   if(prev.n){const pp=Math.round(prev.full/prev.n*100), d=pct-pp;
     h+=`<div class="stat"><div class="label">Vorwoche</div><div class="v num">${pp} %</div><div class="hint num">${d===0?"gleich":(d>0?"+":"")+d+" Punkte"}</div></div>`;
   }else{h+=`<div class="stat"><div class="label">Mahlzeiten</div><div class="v num">${s.n}</div><div class="hint">Vergleich ab nächster Woche</div></div>`}
-  h+=`</div>`;
+  h+=`</div>`+cov.html;
   const minHit=Math.min(...s.per.map(p=>p.hit));
   const weakest=s.per.filter(p=>p.hit===minHit&&p.hit<s.n);
   h+=`<div><div class="label" style="margin-bottom:8px">Erfüllt pro Kriterium</div><div class="bars">`+s.per.map(p=>{
@@ -494,8 +586,9 @@ function renderWeek(){
     return `<div class="bar" style="grid-template-columns:96px 1fr auto"><span>${x.m}</span><div class="track"><div class="fill" style="width:${w}%"></div></div><span class="val">${x.f}/${x.n} · ${w} %</span></div>`}).join("")+`</div></div>`;
   h+=`<div><div class="label" style="margin-bottom:6px">${MAX}/${MAX} pro Tag</div><div class="days">`;
   for(let i=0;i<7;i++){const d=addDays(ws,i), l=inRange(d,addDays(d,1)), f=l.filter(e=>scoreOf(e)===MAX).length;
-    h+=`<div class="day ${dkey(d)===dkey(new Date())?"today":""}">${WD[i]}${isPms(dkey(d))?" ·P":""}<b>${l.length?`${f}/${l.length}`:"–"}</b></div>`}
-  h+=`</div></div>`;
+    const k=dkey(d), r=!l.length&&rating(k), open=!l.length&&!r&&k<dkey(new Date())&&firstDay()&&k>=firstDay();
+    h+=`<div class="day ${k===dkey(new Date())?"today":""} ${r?"r-"+r:""} ${open||r?"gapday":""}">${WD[i]}${isPms(k)?" ·P":""}<b>${l.length?`${f}/${l.length}`:r?({gut:"gut",gemischt:"gem.",schwer:"schw."})[r]:"–"}</b></div>`}
+  h+=`</div></div>`+gapPattern();
   body.innerHTML=h;
 }
 $("w-prev").onclick=()=>{weekRef=addDays(weekRef,-7);renderWeek()};
@@ -529,18 +622,80 @@ $("imp-file").onchange=e=>{
       let added=0; const ids=new Set(entries.map(x=>x.id));
       list.forEach(x=>{ if(x&&x.id&&typeof x.ts==="number"&&!ids.has(x.id)){entries.push(x);ids.add(x.id);added++} });
       let dAdded=0; if(data&&data.days&&typeof data.days==="object"){ Object.entries(data.days).forEach(([k,v])=>{ if(!days[k]&&v){days[k]=v;dAdded++} }); persistDays() }
-      if(persist()){ toast(added||dAdded?`${added} Einträge geladen`:"Keine neuen Einträge in der Datei"); renderData() }
+      if(persist()){ toast(added||dAdded?`${added} Einträge geladen`:"Keine neuen Einträge in der Datei"); renderData(); renderTrack() }
     }catch(err){ toast("Diese Datei ist keine Tracker-Sicherung") }
     e.target.value="";
   };
   r.readAsText(f);
 };
 
+/* ---------- Erfasste Tage ---------- */
+function renderTrack(){
+  const fd=firstDay(), today=startOfDay(new Date()), tk=dkey(today);
+  if(!fd){$("track").hidden=true;return}
+  $("track").hidden=false;
+  let html="", done=0, total=0;
+  for(let i=13;i>=0;i--){
+    const d=addDays(today,-i), k=dkey(d), before=k<fd;
+    if(before){html+=`<span class="dot off" aria-hidden="true"></span>`;continue}
+    const st=dayState(k), isT=k===tk;
+    if(st!=="open"){done++;total++} else if(!isT){total++}
+    const lab=`${fmtDay(d)}: ${st==="t"?"getrackt":st==="open"?(isT?"heute, noch offen":"offen"):"nachgetragen, "+rating(k)}`;
+    html+=`<button type="button" class="dot ${st==="open"?"":st} ${isT&&st==="open"?"now":""}" data-k="${k}" title="${lab}" aria-label="${lab}"></button>`;
+  }
+  $("dots").innerHTML=html;
+  let streak=0, d=today;
+  if(dayState(tk)==="open") d=addDays(today,-1);
+  while(dkey(d)>=fd && dayState(dkey(d))!=="open"){streak++; d=addDays(d,-1)}
+  $("track-sum").textContent=`${done} von ${total} Tagen erfasst${streak>1?` · Serie ${streak} Tage`:""}`;
+  $("dots").querySelectorAll(".dot[data-k]").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.k;
+    if(hasMeals(k)||k===tk){ dayRef=startOfDay(new Date(k+"T12:00")); setView("day") } else openFill(k);
+  });
+  // Hinweis für gestern
+  const yk=dkey(addDays(today,-1)); let skip=null; try{skip=localStorage.getItem(KEY_SKIP)}catch(e){}
+  const show=yk>=fd && dayState(yk)==="open" && skip!==yk;
+  $("gap-prompt").hidden=!show;
+  if(show){ $("gap-yes").onclick=()=>openFill(yk); $("gap-no").onclick=()=>{try{localStorage.setItem(KEY_SKIP,yk)}catch(e){} $("gap-prompt").hidden=true} }
+}
+
+let fillKey=null, fill={rating:null,why:[],pms:false,note:""};
+function openFill(k){
+  fillKey=k; const d=days[k]||{};
+  fill={rating:d.rating||null,why:[...(d.why||[])],pms:!!d.pms,note:d.note||""};
+  $("fill-title").textContent=fmtDay(new Date(k+"T12:00"));
+  $("fill-note").value=fill.note; $("fill-del").hidden=!d.rating;
+  setView("fill"); renderFill(); window.scrollTo({top:0});
+}
+function renderFill(){
+  const r=$("fill-rate"); r.innerHTML="";
+  RATES.forEach(([v,l])=>{const x=document.createElement("button");x.type="button";x.className="chip";x.textContent=l;
+    x.setAttribute("aria-pressed",fill.rating===v);x.onclick=()=>{fill.rating=fill.rating===v?null:v;renderFill()};r.appendChild(x)});
+  const w=$("fill-why"); w.innerHTML=""; w.appendChild(makeChipsPlain(FILL_WHY,fill.why,renderFill));
+  $("fill-pms").setAttribute("aria-pressed",fill.pms);
+  $("fill-save").disabled=!fill.rating;
+}
+function makeChipsPlain(list,arr,cb){
+  const el=document.createElement("div"); el.className="chips";
+  list.forEach(t=>{const x=document.createElement("button");x.type="button";x.className="chip";x.textContent=t;
+    x.setAttribute("aria-pressed",arr.includes(t));x.onclick=()=>{const i=arr.indexOf(t);i>=0?arr.splice(i,1):arr.push(t);cb()};el.appendChild(x)});
+  return el;
+}
+$("fill-pms").onclick=()=>{fill.pms=!fill.pms;renderFill()};
+$("fill-note").addEventListener("input",e=>fill.note=e.target.value);
+$("fill-cancel").onclick=()=>setView("add");
+$("fill-save").onclick=()=>{
+  if(!fill.rating)return;
+  if(setDay(fillKey,{rating:fill.rating,why:fill.why,pms:fill.pms,note:fill.note.trim()})){toast("Tag eingeordnet");setView("add")}
+};
+$("fill-del").onclick=()=>{ if(setDay(fillKey,{rating:null,why:[],note:""})){toast("Einordnung entfernt");setView("add")} };
+
 /* ---------- Ansichten ---------- */
 function setView(v){
   view=v;
   document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.view===v));
-  ["add","day","week","data"].forEach(x=>$("v-"+x).hidden=x!==v);
+  ["add","day","week","data","fill"].forEach(x=>$("v-"+x).hidden=x!==v);
+  renderTrack();
   if(v==="day")renderDay(); if(v==="week")renderWeek(); if(v==="data")renderData();
 }
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{if(b.dataset.view==="add"&&editingId)resetForm();setView(b.dataset.view)});
@@ -549,6 +704,8 @@ let tt; function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clea
 $("hs").innerHTML=HS.filter(r=>r[0]<=7).map(r=>`<li class="${r[0]===2||r[0]===5?"ideal":""}"><span class="lv">${r[0]===7?"7–10":r[0]}</span><div><b>${r[0]===7?"Übervoll bis vollgestopft":r[1]}</b><p>${r[0]===7?"Mehr gegessen als der Körper braucht. Blähungen, Trägheit, eventuell Reue.":r[2]}</p></div></li>`).join("");
 
 resetForm();
+renderTrack();
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") renderTrack() });
 if("serviceWorker" in navigator){
   let reloaded=false;
   navigator.serviceWorker.addEventListener("controllerchange",()=>{ if(!reloaded){reloaded=true;location.reload()} });
