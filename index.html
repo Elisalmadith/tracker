@@ -137,6 +137,14 @@ header{display:flex;justify-content:space-between;align-items:flex-start;gap:12p
 .tool .row{gap:8px}
 .mini{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:.88rem}
 .mini.go{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.boxitem{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:0}
+.boxitem summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;font-weight:700;cursor:pointer}
+.boxitem summary::-webkit-details-marker{display:none}
+.boxitem summary .hint{font-weight:400;flex:none}
+.boxitem .in{padding:0 14px 12px;display:flex;flex-direction:column;gap:6px}
+.boxitem .in p{margin:0;font-size:.95rem}
+.runitem{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid var(--accent);background:var(--accent-soft);border-radius:12px;padding:12px 14px;font-weight:700}
+.runitem .hint{font-weight:400}
 .own li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0}
 .own button{border:0;background:transparent;color:var(--muted);font-size:1.1rem}
 .ov{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;
@@ -212,6 +220,14 @@ ul.plain{margin:0;padding-left:18px}
       <h2 style="margin-bottom:4px">Was ist gerade da?</h2>
       <p class="hint" style="margin:0 0 12px">Kurz innehalten. Du musst jetzt nichts entscheiden.</p>
       <div class="tiles" id="ak-tiles"></div>
+      <div style="margin-top:20px;border-top:1px solid var(--line);padding-top:14px">
+        <h2 style="margin-bottom:4px">Werkzeugkasten</h2>
+        <p class="hint" style="margin:0 0 12px">Oder direkt ein Werkzeug auswählen.</p>
+        <div class="label" style="margin-bottom:6px">Mit Begleitung</div>
+        <div class="crit" id="ak-box-run" style="margin-bottom:14px"></div>
+        <div class="label" style="margin-bottom:6px">Weitere Werkzeuge</div>
+        <div class="crit" id="ak-box"></div>
+      </div>
     </div>
     <div id="ak-unsure" hidden>
       <h2 style="margin-bottom:4px">Kurz nachspüren</h2>
@@ -373,7 +389,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=12;
+const APP_VERSION=13;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -797,6 +813,15 @@ function akShow(part){["start","unsure","area"].forEach(x=>$("ak-"+x).hidden=x!=
 function openAkut(){ setView("akut"); akShow("start"); window.scrollTo({top:0});
   $("ak-tiles").innerHTML=AKUT.map(a=>`<button type="button" class="tile" data-a="${a.id}">${a.t}</button>`).join("")+`<button type="button" class="tile soft" data-a="?">Ich weiß es nicht</button>`;
   $("ak-tiles").querySelectorAll(".tile").forEach(b=>b.onclick=()=>b.dataset.a==="?"?akUnsure():akOpen(b.dataset.a));
+  renderBox();
+}
+function renderBox(){
+  const seen=new Set(), run=[], rest=[];
+  AKUT.forEach(a=>a.tools.forEach(t=>{ const key=t.run||t.id; if(seen.has(key)||["lastmeal","pms"].includes(t.id))return; seen.add(key); (t.run?run:rest).push(t) }));
+  $("ak-box-run").innerHTML=run.map(t=>`<button type="button" class="runitem" data-run="${t.run}"><span style="min-width:0">${t.t} <span class="hint">· ${t.d}</span><br><span class="hint">${t.w}</span></span><span class="mini go" style="white-space:nowrap;flex:none">Starten</span></button>`).join("");
+  $("ak-box-run").querySelectorAll("[data-run]").forEach(b=>b.onclick=()=>RUN[b.dataset.run]());
+  rest.sort((a,b)=>a.t.localeCompare(b.t,"de"));
+  $("ak-box").innerHTML=rest.map(t=>`<details class="boxitem"><summary><span>${t.t}</span><span class="hint">${t.d||""}</span></summary><div class="in"><p>${t.how}</p><p class="wy">${t.w}</p></div></details>`).join("");
 }
 $("akut-open").onclick=openAkut;
 const AKQ=[["hungrig","Hungrig"],["angespannt","Angespannt oder wütend"],["einsam","Einsam oder traurig"],["muede","Müde"]];
