@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Hunger Balance Calm</title>
+<title>10/10</title>
 <meta name="theme-color" content="#3D6A55">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Balance">
+<meta name="apple-mobile-web-app-title" content="10/10">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -232,12 +232,12 @@ details{border-top:0}
 <body>
 <div id="bgimg" aria-hidden="true"></div>
 <div id="splash" role="button" tabindex="0" aria-label="Zum Starten tippen">
-  <div><h1>Hunger<span class="sep">·</span>Balance<span class="sep">·</span>Calm</h1><p>Ab Stufe 2 essen. Bei 5 aufhören. In Ruhe.</p></div>
+  <div><h1>10/10</h1><p>Ab Stufe 2 essen. Bei 5 aufhören. In Ruhe.</p></div>
   <span class="tap">Zum Starten tippen</span>
 </div>
 <div class="wrap">
   <header>
-    <div><h1>Hunger<span class="sep">·</span>Balance<span class="sep">·</span>Calm</h1>
+    <div><h1>10/10</h1>
     <p class="sub" id="today-line">Ruhe · Hunger · Balance</p></div>
     <button type="button" class="akut-btn" id="akut-open">Akut</button>
   </header>
@@ -441,7 +441,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=16;
+const APP_VERSION=17;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -492,7 +492,7 @@ if(navigator.storage&&navigator.storage.persist){ navigator.storage.persist().ca
 let view="add", dayRef=startOfDay(new Date()), weekRef=weekStart(new Date());
 let form=blank(), editingId=null;
 function blank(){return{c:false,h:false,p:false,s:false,f:false,b:false,n:false,before:null,after:null,meal:null,reg:[],whyH:[],whyB:[],feelings:[],touchedH:false,touchedB:false,legacy:[],note:""}}
-$("today-line").textContent=fmtDay(new Date())+" · Version "+APP_VERSION;
+$("today-line").textContent=fmtDay(new Date());
 
 /* ---------- Formular ---------- */
 function renderForm(){
@@ -724,7 +724,7 @@ $("w-next").onclick=()=>{weekRef=addDays(weekRef,7);renderWeek()};
 
 /* ---------- Daten ---------- */
 function renderData(){
-  $("cnt").textContent=entries.length; $("ver").textContent="App-Version "+APP_VERSION;
+  $("cnt").textContent=entries.length;
   let last=null; try{last=localStorage.getItem(KEY_BK)}catch(e){}
   if(last){const days=Math.floor((Date.now()-Number(last))/864e5);$("last").textContent=days===0?"heute":days===1?"gestern":`vor ${days} Tagen`}
 }
