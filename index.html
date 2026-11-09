@@ -202,6 +202,16 @@ ul.plain{margin:0;padding-left:18px}
 @media (max-width:420px){ .scale{padding-left:0} .stat .v{font-size:1.6rem} }
 @media (prefers-reduced-motion:no-preference){ .ck,.chip,.tabs button{transition:background .15s,border-color .15s,color .15s} }
 /* ---- iOS schlicht ---- */
+.when-row{display:flex;gap:8px;align-items:center}
+.when-row input{flex:1}
+.when-row .chip{flex:none;min-height:44px;padding:0 16px;border-radius:12px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--fill);border-radius:12px;padding:3px}
+.seg button{border:0;background:transparent;border-radius:9px;padding:9px 2px;font-size:.9rem;font-weight:500;color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--surface);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.tabs{background:linear-gradient(180deg,rgba(255,255,255,.32),rgba(255,255,255,.12));-webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);
+  border:1px solid rgba(255,255,255,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 1px rgba(255,255,255,.15),0 8px 24px rgba(0,0,0,.18)}
+.tabs button{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35)}
+.tabs button[aria-selected="true"]{background:rgba(255,255,255,.88);color:#24443A;text-shadow:none;box-shadow:0 2px 8px rgba(0,0,0,.12)}
 :root{--r:20px}
 body{-webkit-font-smoothing:antialiased;letter-spacing:-.005em}
 h1,h2,h3{font-weight:600;letter-spacing:-.02em}
@@ -317,7 +327,7 @@ details{border-top:0}
       <div class="label" style="margin-bottom:6px">Was war los? (optional)</div>
       <div class="chips" id="fill-why"></div>
     </div>
-    <div class="row"><button type="button" class="chip" id="fill-pms" aria-pressed="false">PMS-Tag</button></div>
+    <div class="row"><button type="button" class="chip" id="fill-pms" aria-pressed="false">PMS</button></div>
     <div>
       <label class="label" for="fill-note">Notiz (optional)</label>
       <textarea id="fill-note" placeholder="Was möchtest du dir merken?"></textarea>
@@ -334,13 +344,8 @@ details{border-top:0}
       <div><h2 id="form-title">Neue Mahlzeit</h2><div class="hint num" id="since"></div></div>
       <div class="score num" id="score"><span class="big">0</span><span>/ 7</span></div>
     </div>
-    <label class="label" for="f-when">Wann</label>
-    <input type="datetime-local" id="f-when">
-    <div class="row"><button type="button" class="chip" id="f-pms" aria-pressed="false">PMS-Tag</button><span class="hint">gilt für den ganzen Tag</span></div>
-    <div>
-      <div class="label" style="margin-bottom:6px">Mahlzeit (optional)</div>
-      <div class="chips" id="meal"></div>
-    </div>
+    <div class="when-row"><input type="datetime-local" id="f-when" aria-label="Wann"><button type="button" class="chip" id="f-pms" aria-pressed="false">PMS</button></div>
+    <div class="seg" id="meal" role="group" aria-label="Mahlzeit"></div>
     <div class="crit" id="crit"></div>
     <div>
       <div class="label" style="margin-bottom:6px">Vorher reguliert mit</div>
@@ -377,7 +382,7 @@ details{border-top:0}
       <h2 id="d-title">Heute</h2>
       <button id="d-next" aria-label="Nächster Tag">›</button>
     </div>
-    <div class="row"><button type="button" class="chip" id="d-pms" aria-pressed="false">PMS-Tag</button><span class="hint">gilt für den ganzen Tag</span></div>
+    <div class="row"><button type="button" class="chip" id="d-pms" aria-pressed="false">PMS</button></div>
     <div id="d-body"></div>
   </section>
 
@@ -441,7 +446,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=17;
+const APP_VERSION=18;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -532,7 +537,8 @@ function renderForm(){
     }
   });
   const mel=$("meal"); mel.innerHTML="";
-  MEALS.forEach(t=>{const x=document.createElement("button");x.type="button";x.className="chip";x.textContent=t;
+  const SHORT={"Mittagessen":"Mittag","Abendessen":"Abend"};
+  MEALS.forEach(t=>{const x=document.createElement("button");x.type="button";x.textContent=SHORT[t]||t;
     x.setAttribute("aria-pressed",form.meal===t);x.onclick=()=>{form.meal=form.meal===t?null:t;renderForm()};mel.appendChild(x)});
   chipGroup("reg",REG,form.reg);
   const needFeel=activeWhy().some(t=>FEEL_TRIGGERS.includes(t));
