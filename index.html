@@ -202,6 +202,22 @@ ul.plain{margin:0;padding-left:18px}
 @media (max-width:420px){ .scale{padding-left:0} .stat .v{font-size:1.6rem} }
 @media (prefers-reduced-motion:no-preference){ .ck,.chip,.tabs button{transition:background .15s,border-color .15s,color .15s} }
 /* ---- iOS schlicht ---- */
+.ck .state{font-size:1.1rem;color:var(--accent);min-width:1em;text-align:right}
+.eat-btn{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;border:0;border-radius:14px;padding:14px;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:1.02rem;margin:4px 0}
+.eat-btn small{font-weight:400;opacity:.85;font-size:.82rem}
+#eat{position:fixed;inset:0;z-index:45;background:#070b09;color:#dfe7e1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;text-align:center;
+  padding:calc(40px + env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) calc(32px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px))}
+#eat .msg{font-size:1.5rem;font-weight:500;line-height:1.35;max-width:22ch;transition:opacity 1.2s ease}
+#eat .sub2{font-size:.95rem;color:#9fb0a6;max-width:30ch;margin-top:10px;transition:opacity 1.2s ease}
+#eat .clock{font-variant-numeric:tabular-nums;color:#6f7f76;font-size:.95rem}
+#eat .orb{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 50% 45%,rgba(134,184,160,.35),rgba(134,184,160,0) 70%);animation:orb 10s ease-in-out infinite}
+@keyframes orb{0%,100%{transform:scale(.8);opacity:.55}50%{transform:scale(1.1);opacity:1}}
+@media (prefers-reduced-motion:reduce){#eat .orb{animation:none}}
+#eat .chips{justify-content:center}
+#eat .chip{background:rgba(255,255,255,.08);color:#dfe7e1;border-color:transparent}
+#eat .chip[aria-pressed="true"]{background:#dfe7e1;color:#0b120e}
+#eat .btn{background:#dfe7e1;color:#0b120e}
+#eat .btn.ghost{background:transparent;color:#dfe7e1;border:1px solid rgba(255,255,255,.25)}
 .when-row{display:flex;gap:8px;align-items:center}
 .when-row input{flex:1}
 .when-row .chip{flex:none;min-height:44px;padding:0 16px;border-radius:12px}
@@ -413,6 +429,18 @@ details{border-top:0}
 </div>
 <div class="toast" id="toast" hidden></div>
 <div class="ov" id="ov" hidden role="dialog" aria-modal="true"></div>
+<div id="eat" hidden role="dialog" aria-modal="true" aria-label="Essmodus">
+  <div class="clock" id="eat-clock"></div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:18px">
+    <div class="orb" aria-hidden="true"></div>
+    <div class="msg" id="eat-msg">Ankommen.</div>
+    <div class="sub2" id="eat-sub">Wähle einen Klang. Der erste Ton markiert den Beginn.</div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%">
+    <div class="chips" id="eat-snd"></div>
+    <div class="row" style="justify-content:center"><button type="button" class="btn" id="eat-go">Beginnen</button><button type="button" class="btn ghost" id="eat-x">Abbrechen</button></div>
+  </div>
+</div>
 
 <script>
 const CRIT=[
@@ -446,7 +474,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=19;
+const APP_VERSION=20;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -508,9 +536,11 @@ function renderForm(){
   CRIT.forEach(c=>{
     const b=document.createElement("button");
     b.type="button"; b.className="ck"; b.setAttribute("aria-pressed",form[c.k]);
-    b.innerHTML=`<span class="mark">${c.L}</span><span class="t"><b>${c.name} · ${c.de}</b><small>${c.hint}</small></span><span class="state">${form[c.k]?"Ja":"Nein"}</span>`;
+    b.innerHTML=`<span class="mark">${c.L}</span><span class="t"><b>${c.name} · ${c.de}</b><small>${c.hint}</small></span><span class="state" aria-label="${form[c.k]?"erfüllt":"offen"}">${form[c.k]?"✓":""}</span>`;
     b.onclick=()=>{form[c.k]=!form[c.k]; if(c.k==="h")form.touchedH=true; if(c.k==="b")form.touchedB=true; renderForm()};
     crit.appendChild(b);
+    if(c.k==="f"&&!editingId){ const go=document.createElement("button"); go.type="button"; go.className="eat-btn"; go.id="eat-start";
+      go.innerHTML=`<span>Essen beginnen</span><small>mit Klang und Pause</small>`; go.onclick=()=>EAT.open(); crit.appendChild(go); }
     if(c.k==="h"||c.k==="b"){
       const field=c.k==="h"?"before":"after", ideal=c.k==="h"?2:5;
       const w=document.createElement("div"); w.className="scale";
@@ -605,7 +635,7 @@ $("save").onclick=()=>{
   CRIT.forEach(c=>body[c.k]=form[c.k]);
   const i=entries.findIndex(e=>e.id===body.id);
   if(i>=0)entries[i]=body; else entries.push(body);
-  if(persist()){ renderTrack(); toast(`Gespeichert · ${sc}/${MAX}`); dayRef=startOfDay(when); resetForm(); }
+  if(persist()){ renderTrack(); toast(praise(body),3600); dayRef=startOfDay(when); resetForm(); }
 };
 $("cancel").onclick=resetForm;
 $("del").onclick=()=>{$("del-confirm").hidden=false};
@@ -968,6 +998,102 @@ const RUN={
 };
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("ov").hidden) ovClose() });
 
+/* ---------- Essmodus mit Klang ---------- */
+const EAT=(()=>{
+  const SOUNDS=[["wind","Wind"],["regen","Regen"],["voegel","Vögel"],["schale","Klangschale"],["stille","Stille"]];
+  const KEY_SND="tenten.eatSound";
+  let ctx=null, master=null, bed=null, nodes=[], timers=[], t0=0, phase="pick", snd="wind", wake=null;
+  try{ snd=localStorage.getItem(KEY_SND)||"wind" }catch(e){}
+  const $e=id=>document.getElementById(id);
+  function audio(){
+    if(!ctx){ try{ if(navigator.audioSession) navigator.audioSession.type="playback" }catch(e){}
+      ctx=new (window.AudioContext||window.webkitAudioContext)(); master=ctx.createGain(); master.gain.value=0; master.connect(ctx.destination) }
+    if(ctx.state==="suspended") ctx.resume();
+    return ctx;
+  }
+  function noiseBuf(kind){
+    const len=ctx.sampleRate*8, b=ctx.createBuffer(1,len,ctx.sampleRate), d=b.getChannelData(0); let last=0;
+    for(let i=0;i<len;i++){ const w=Math.random()*2-1; if(kind==="brown"){ last=(last+0.02*w)/1.02; d[i]=last*3.5 } else d[i]=w*0.5 }
+    return b;
+  }
+  function loopNoise(kind){ const s=ctx.createBufferSource(); s.buffer=noiseBuf(kind); s.loop=true; s.start(); nodes.push(s); return s }
+  function lfo(freq,depth,target,offset){ const o=ctx.createOscillator(), g=ctx.createGain(); o.frequency.value=freq; g.gain.value=depth; o.connect(g); g.connect(target); o.start(); nodes.push(o); if(offset!=null) target.value=offset; return o }
+  function buildBed(kind){
+    bed=ctx.createGain(); bed.gain.value=1; bed.connect(master);
+    // Atemtakt: 6 Atemzüge pro Minute, ganz leicht
+    const breath=ctx.createGain(); breath.gain.value=0.85; breath.connect(bed); lfo(0.1,0.15,breath.gain);
+    if(kind==="wind"){
+      const n=loopNoise("brown"), f=ctx.createBiquadFilter(); f.type="bandpass"; f.Q.value=0.7; f.frequency.value=420;
+      lfo(0.05,260,f.frequency); lfo(0.13,90,f.frequency); const g=ctx.createGain(); g.gain.value=0.55; lfo(0.07,0.18,g.gain);
+      n.connect(f); f.connect(g); g.connect(breath);
+    } else if(kind==="regen"){
+      const n=loopNoise("white"), hp=ctx.createBiquadFilter(), lp=ctx.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=900; lp.type="lowpass"; lp.frequency.value=7000;
+      const g=ctx.createGain(); g.gain.value=0.16; n.connect(hp); hp.connect(lp); lp.connect(g); g.connect(breath);
+      const r=loopNoise("brown"), rf=ctx.createBiquadFilter(); rf.type="lowpass"; rf.frequency.value=300; const rg=ctx.createGain(); rg.gain.value=0.35; r.connect(rf); rf.connect(rg); rg.connect(breath);
+      const drop=()=>{ if(phase!=="eat"&&phase!=="pause"&&phase!=="done")return; const o=ctx.createOscillator(), og=ctx.createGain(), t=ctx.currentTime;
+        o.frequency.setValueAtTime(1800+Math.random()*2200,t); o.frequency.exponentialRampToValueAtTime(600,t+0.05); og.gain.setValueAtTime(0.025*Math.random(),t); og.gain.exponentialRampToValueAtTime(0.0001,t+0.06);
+        o.connect(og); og.connect(breath); o.start(t); o.stop(t+0.08); timers.push(setTimeout(drop,40+Math.random()*220)) };
+      drop();
+    } else if(kind==="voegel"){
+      const n=loopNoise("brown"), f=ctx.createBiquadFilter(); f.type="bandpass"; f.frequency.value=380; f.Q.value=0.6; lfo(0.04,150,f.frequency);
+      const g=ctx.createGain(); g.gain.value=0.3; n.connect(f); f.connect(g); g.connect(breath);
+      const chirp=()=>{ if(phase==="pick")return; const t=ctx.currentTime, base=2600+Math.random()*1800, notes=2+Math.floor(Math.random()*4);
+        for(let i=0;i<notes;i++){ const o=ctx.createOscillator(), og=ctx.createGain(), st=t+i*(0.09+Math.random()*0.05);
+          o.type="sine"; o.frequency.setValueAtTime(base*(0.9+Math.random()*0.2),st); o.frequency.exponentialRampToValueAtTime(base*(1.15+Math.random()*0.3),st+0.07);
+          og.gain.setValueAtTime(0.0001,st); og.gain.exponentialRampToValueAtTime(0.035,st+0.015); og.gain.exponentialRampToValueAtTime(0.0001,st+0.09);
+          o.connect(og); og.connect(breath); o.start(st); o.stop(st+0.12) }
+        timers.push(setTimeout(chirp,2500+Math.random()*7000)) };
+      timers.push(setTimeout(chirp,1500));
+    } else if(kind==="schale"){
+      [[110,0.05],[110.6,0.04],[297,0.018],[298.2,0.014],[594,0.006]].forEach(([fr,a])=>{ const o=ctx.createOscillator(), g=ctx.createGain(); o.frequency.value=fr; g.gain.value=a; o.connect(g); g.connect(breath); o.start(); nodes.push(o) });
+    }
+  }
+  function bowl(times=1,vol=0.35){
+    const t=ctx.currentTime;
+    for(let k=0;k<times;k++){ const st=t+k*2.6;
+      [[1,1],[2.76,0.45],[5.4,0.22],[8.93,0.1]].forEach(([r,a])=>{ [0,1.8].forEach(det=>{
+        const o=ctx.createOscillator(), g=ctx.createGain(); o.frequency.value=196*r+det; g.gain.setValueAtTime(0.0001,st); g.gain.exponentialRampToValueAtTime(vol*a*0.4,st+0.02); g.gain.exponentialRampToValueAtTime(0.0001,st+9/r**0.3);
+        o.connect(g); g.connect(ctx.destination); o.start(st); o.stop(st+10) }) }) }
+  }
+  function fade(to,sec){ const t=ctx.currentTime; master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(master.gain.value,t); master.gain.linearRampToValueAtTime(to,t+sec) }
+  function stopAll(){ timers.forEach(clearTimeout); timers=[]; nodes.forEach(n=>{try{n.stop()}catch(e){}}); nodes=[]; if(bed){try{bed.disconnect()}catch(e){} bed=null} }
+  function say(m,sub){ const a=$e("eat-msg"), b=$e("eat-sub"); a.style.opacity=0; b.style.opacity=0; setTimeout(()=>{ a.textContent=m; b.textContent=sub||""; a.style.opacity=1; b.style.opacity=1 },600) }
+  function renderPick(){
+    $e("eat-snd").innerHTML=SOUNDS.map(([k,l])=>`<button type="button" class="chip" data-s="${k}" aria-pressed="${k===snd}">${l}</button>`).join("");
+    $e("eat-snd").querySelectorAll("button").forEach(b=>b.onclick=()=>{ snd=b.dataset.s; try{localStorage.setItem(KEY_SND,snd)}catch(e){} renderPick(); preview() });
+  }
+  function preview(){ audio(); stopAll(); if(snd!=="stille"){ phase="preview"; buildBed(snd); fade(0.5,0.8) } else fade(0,0.3) }
+  function tick(){ const s=Math.floor((Date.now()-t0)/1000); $e("eat-clock").textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}` }
+  function start(){
+    audio(); phase="eat"; t0=Date.now(); stopAll(); if(snd!=="stille") buildBed(snd); fade(snd==="stille"?0:0.55,6); bowl(1);
+    try{ navigator.wakeLock&&navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{}) }catch(e){}
+    $e("eat-snd").hidden=true; $e("eat-go").textContent="Fertig"; $e("eat-x").textContent="Abbrechen";
+    say("Langsam. Schmecken. Spüren.","Leg das Handy mit dem Bildschirm nach oben neben dich. Nach acht Minuten kommt ein leiser Ton.");
+    timers.push(setInterval(tick,1000)); tick();
+    timers.push(setTimeout(()=>{ phase="pause"; bowl(1,0.25); fade(snd==="stille"?0:0.3,3);
+      say("Besteck ablegen.","Drei ruhige Atemzüge. Hand auf den Bauch. Bin ich noch hungrig?");
+      timers.push(setTimeout(()=>{ phase="eat"; fade(snd==="stille"?0:0.55,4); say("Weiter in Ruhe.","Wenn der Hunger leiser wird, bist du nah an der 5.") },75000)) }, 8*60000));
+    timers.push(setTimeout(()=>{ phase="done"; bowl(2,0.28); say("Zwanzig Minuten.","Jetzt spürst du die 5 verlässlich. Wie fühlt sich dein Bauch an?"); fade(0,40) }, 20*60000));
+  }
+  function close(finished){
+    if(ctx) fade(0,finished?3:0.8); const t=finished?3200:900; phase="pick";
+    setTimeout(()=>{ stopAll(); try{wake&&wake.release()}catch(e){} wake=null },t);
+    $e("eat").hidden=true;
+    if(finished&&t0){ const d=new Date(t0); $("f-when").value=toInput(d); whenTouched=true;
+      const bb=document.querySelectorAll("#crit .ck")[5]; if(bb) bb.scrollIntoView({behavior:"smooth",block:"center"});
+      toast("Wie satt bist du jetzt? Trag die Hungerstufe danach ein.",3500) }
+    t0=0;
+  }
+  function open(){
+    phase="pick"; t0=0; $e("eat").hidden=false; $e("eat-snd").hidden=false; $e("eat-go").textContent="Beginnen"; $e("eat-x").textContent="Abbrechen";
+    $e("eat-clock").textContent=""; $e("eat-msg").textContent="Ankommen."; $e("eat-sub").textContent="Wähle einen Klang. Der erste Ton markiert den Beginn.";
+    renderPick();
+  }
+  $e("eat-go").onclick=()=>{ phase==="pick"||phase==="preview" ? start() : close(true) };
+  $e("eat-x").onclick=()=>close(false);
+  return {open};
+})();
+
 /* ---------- Ansichten ---------- */
 function setView(v){
   view=v;
@@ -978,7 +1104,15 @@ function setView(v){
 }
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{if(b.dataset.view==="add"&&editingId)resetForm();setView(b.dataset.view)});
 
-let tt; function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2200)}
+let tt; function toast(m,ms){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,ms||2200)}
+const GOOD={c:"Ruhig ankommen",h:"Mit echtem Hunger beginnen",p:"Auf dem Teller anrichten",s:"Im Sitzen essen",f:"Ohne Ablenkung essen",b:"Bei der 5 aufhören",n:"Dich genährt fühlen"};
+function praise(e){
+  const sc=scoreOf(e);
+  if(sc===MAX) return `${MAX} von ${MAX}. Alles im Einklang, schön.`;
+  if(sc===0) return "Eingetragen. Auch das ist eine wertvolle Information.";
+  const order=["b","h","c","f","n","s","p"], k=order.find(x=>e[x]);
+  return `${sc} von ${MAX}. ${GOOD[k]} hat gut geklappt.`;
+}
 $("hs").innerHTML=HS.filter(r=>r[0]<=7).map(r=>`<li class="${r[0]===2||r[0]===5?"ideal":""}"><span class="lv">${r[0]===7?"7–10":r[0]}</span><div><b>${r[0]===7?"Übervoll bis vollgestopft":r[1]}</b><p>${r[0]===7?"Mehr gegessen als der Körper braucht. Blähungen, Trägheit, eventuell Reue.":r[2]}</p></div></li>`).join("");
 
 resetForm();
