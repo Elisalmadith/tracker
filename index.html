@@ -446,7 +446,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=18;
+const APP_VERSION=19;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -530,8 +530,12 @@ function renderForm(){
       const isH=c.k==="h", show=!form[c.k]&&(isH?(form.touchedH||form.before!=null):(form.touchedB||form.after!=null));
       if(show){
         const y=document.createElement("div"); y.className="why";
-        y.innerHTML=`<span class="q">${isH?"Was war statt Hunger da?":"Was hat mich weiteressen lassen?"}</span>`;
-        y.appendChild(makeChips(isH?WHY_H:WHY_B,isH?form.whyH:form.whyB));
+        const arr=isH?form.whyH:form.whyB, key=isH?"openH":"openB", open=form[key]||arr.length>0;
+        const t=document.createElement("button"); t.type="button"; t.className="mini"; t.style.alignSelf="flex-start";
+        t.textContent=open?(isH?"Was war statt Hunger da?":"Was hat mich weiteressen lassen?"):(isH?"Grund angeben":"Grund angeben");
+        t.setAttribute("aria-expanded",open); t.onclick=()=>{ if(!arr.length){form[key]=!form[key]; renderForm()} };
+        y.appendChild(t);
+        if(open) y.appendChild(makeChips(isH?WHY_H:WHY_B,arr));
         crit.appendChild(y);
       }
     }
