@@ -124,6 +124,33 @@ summary{font-weight:700;cursor:pointer}
 .day.today{outline:1.5px solid var(--accent)}
 .empty{color:var(--muted);text-align:center;padding:18px 8px}
 .empty b{display:block;color:var(--ink);font-family:var(--f-display);font-size:1.2rem;font-weight:500;margin-bottom:4px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.akut-btn{flex:none;border:1.5px solid var(--gold);background:var(--gold-soft);color:var(--ink);border-radius:999px;padding:9px 16px;font-weight:700;margin-top:4px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:14px 12px;text-align:left;font-weight:700;min-height:56px}
+.tile.soft{font-weight:400;color:var(--muted)}
+.tool{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.tool.cur{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.tool h3{font-family:var(--f-body);font-size:1rem;font-weight:700;margin:0}
+.tool p{margin:0;font-size:.95rem}
+.tool .wy{font-size:.85rem;color:var(--muted)}
+.tool .row{gap:8px}
+.mini{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:.88rem}
+.mini.go{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.own li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0}
+.own button{border:0;background:transparent;color:var(--muted);font-size:1.1rem}
+.ov{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;
+  padding-top:max(24px,env(safe-area-inset-top,0px));padding-bottom:max(24px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ov h2{font-size:1.6rem}
+.ov .big{font-family:var(--f-display);font-size:2.6rem;font-variant-numeric:tabular-nums}
+.bc{width:200px;height:200px;max-width:70vw;max-height:70vw;border-radius:50%;background:var(--accent-soft);border:2px solid var(--accent);transform:scale(.55);transition-property:transform;transition-timing-function:ease-in-out;display:grid;place-items:center}
+.bc span{font-family:var(--f-display);font-size:1.4rem;color:var(--accent)}
+.wave{width:100%;max-width:420px;height:120px;overflow:hidden}
+.wave svg{width:200%;height:100%;display:block;animation:wv 6s linear infinite;transform-origin:center}
+.wave path{fill:none;stroke:var(--accent);stroke-width:3}
+@keyframes wv{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.steps-n{font-family:var(--f-display);font-size:4rem;line-height:1;color:var(--accent)}
+@media (prefers-reduced-motion:reduce){ .bc{transition:none!important;transform:scale(.8)!important} .wave svg{animation:none} }
 .track14{display:flex;flex-direction:column;gap:10px}
 .dots{display:grid;grid-template-columns:repeat(14,1fr);gap:4px}
 .dot{aspect-ratio:1;max-width:100%;border-radius:50%;border:1.5px dashed var(--line);background:transparent;padding:0}
@@ -150,8 +177,9 @@ ul.plain{margin:0;padding-left:18px}
 <body>
 <div class="wrap">
   <header>
-    <h1>10/10 <em>Tracker</em></h1>
-    <p class="sub" id="today-line">Ruhe · Hunger · Balance</p>
+    <div><h1>10/10 <em>Tracker</em></h1>
+    <p class="sub" id="today-line">Ruhe · Hunger · Balance</p></div>
+    <button type="button" class="akut-btn" id="akut-open">Akut</button>
   </header>
 
   <div class="tabs" role="tablist">
@@ -176,6 +204,37 @@ ul.plain{margin:0;padding-left:18px}
     <div class="prompt" id="gap-prompt" hidden>
       <p style="margin:0" id="gap-text">Gestern fehlt noch. Magst du kurz einordnen, wie er war?</p>
       <div class="row"><button type="button" class="btn" id="gap-yes">Einordnen</button><button type="button" class="btn ghost" id="gap-no">Überspringen</button></div>
+    </div>
+  </section>
+
+  <section id="v-akut" class="panel" hidden>
+    <div id="ak-start">
+      <h2 style="margin-bottom:4px">Was ist gerade da?</h2>
+      <p class="hint" style="margin:0 0 12px">Kurz innehalten. Du musst jetzt nichts entscheiden.</p>
+      <div class="tiles" id="ak-tiles"></div>
+    </div>
+    <div id="ak-unsure" hidden>
+      <h2 style="margin-bottom:4px">Kurz nachspüren</h2>
+      <p class="hint" style="margin:0 0 12px">Was davon trifft gerade zu? Mehrere sind möglich.</p>
+      <div class="chips" id="ak-q"></div>
+      <div class="row" style="margin-top:12px"><button type="button" class="btn" id="ak-q-go">Weiter</button><button type="button" class="btn ghost" id="ak-q-back">Zurück</button></div>
+      <div class="callout good" id="ak-q-hunger" hidden style="margin-top:12px"><p>Dann ist es vielleicht echter Hunger. Spürst du ein klares Signal im Magen, wie bei Stufe 2? Dann darfst du in Ruhe essen.</p>
+        <div class="row" style="margin-top:10px"><button type="button" class="btn" id="ak-q-eat">Mahlzeit eintragen</button></div></div>
+    </div>
+    <div id="ak-area" hidden>
+      <div class="row between"><h2 id="ak-title"></h2><button type="button" class="mini" id="ak-back">Zurück</button></div>
+      <p style="margin:6px 0 12px" id="ak-under"></p>
+      <div id="ak-own-wrap" style="margin-bottom:14px">
+        <div class="label" style="margin-bottom:6px">Was mir hilft</div>
+        <ul class="own plain" id="ak-own" style="list-style:none;padding:0;margin:0 0 6px"></ul>
+        <div class="row" style="flex-wrap:nowrap"><input id="ak-own-in" placeholder="Eigene Idee hinzufügen" style="font:inherit;font-size:16px;flex:1;min-width:0;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px"><button type="button" class="mini go" id="ak-own-add">+</button></div>
+      </div>
+      <div class="label" style="margin-bottom:6px">Werkzeuge</div>
+      <div class="crit" id="ak-tools"></div>
+      <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
+        <div class="label" style="margin-bottom:8px">Wie geht es dir jetzt?</div>
+        <div class="row"><button type="button" class="btn" id="ak-done">Ist vorbei</button><button type="button" class="btn ghost" id="ak-eat">Ich esse jetzt bewusst</button><button type="button" class="btn ghost" id="ak-next">Noch da</button></div>
+      </div>
     </div>
   </section>
 
@@ -280,6 +339,7 @@ ul.plain{margin:0;padding-left:18px}
   </section>
 </div>
 <div class="toast" id="toast" hidden></div>
+<div class="ov" id="ov" hidden role="dialog" aria-modal="true"></div>
 
 <script>
 const CRIT=[
@@ -313,7 +373,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=11;
+const APP_VERSION=12;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -632,7 +692,7 @@ $("imp-file").onchange=e=>{
 /* ---------- Erfasste Tage ---------- */
 function renderTrack(){
   const fd=firstDay(), today=startOfDay(new Date()), tk=dkey(today);
-  if(!fd){$("track").hidden=true;return}
+  if(!fd||view==="akut"){$("track").hidden=true;return}
   $("track").hidden=false;
   let html="", done=0, total=0;
   for(let i=13;i>=0;i--){
@@ -690,12 +750,143 @@ $("fill-save").onclick=()=>{
 };
 $("fill-del").onclick=()=>{ if(setDay(fillKey,{rating:null,why:[],note:""})){toast("Einordnung entfernt");setView("add")} };
 
+/* ---------- Akut-Hilfe ---------- */
+const AKUT=[
+ {id:"energie",t:"Energie gesucht",why:"Energie gesucht",under:"Meist steckt Erschöpfung darunter. Der Körper braucht Ruhe, nicht Essen.",tools:[
+  {id:"rest",t:"Hinlegen",d:"10–20 Min",how:"Leg dich hin, Augen zu, Wecker stellen. Du musst nicht schlafen.",w:"Kiki: Müdigkeit ist kein Hunger. Wer müde ist, ruht sich aus."},
+  {id:"light",t:"Wasser und Tageslicht",d:"2 Min",how:"Ein großes Glas Wasser trinken und ans offene Fenster oder kurz nach draußen gehen.",w:"Licht und Flüssigkeit heben die Wachheit spürbar."},
+  {id:"walk5",t:"Fünf Minuten zügig gehen",d:"5 Min",how:"Raus oder durch die Wohnung, Tempo so, dass du etwas wärmer wirst.",w:"Bewegung weckt oft mehr als Essen."},
+  {id:"lastmeal",t:"Kurz prüfen",d:"1 Min",how:"Wann hast du zuletzt gegessen? Ist es länger her und spürst du ein Signal im Magen, ist es vielleicht echter Hunger. Dann iss in Ruhe.",w:"Erschöpfung kann auch heißen, dass Essen fehlt."}]},
+ {id:"runter",t:"Runterkommen",why:"Runterkommen",under:"Anspannung aus dem Tag ist noch im Körper und sucht einen Ausgang.",tools:[
+  {id:"ritual",t:"Übergangsritual",d:"3 Min",how:"Kleidung wechseln, Hände warm waschen und bewusst sagen: Feierabend.",w:"Ein klares Ende zeigt dem Nervensystem, dass die Belastung vorbei ist."},
+  {id:"matte",t:"Akupressurmatte",d:"10 Min",how:"Hinlegen, die ersten zwei Minuten bewusst ausatmen, dann einfach liegen.",w:"Der Druckreiz lenkt die Aufmerksamkeit in den Körper und entspannt danach."},
+  {id:"walk",t:"Spaziergang ohne Handy",d:"10 Min",how:"Handy zu Hause lassen, langsam gehen, Blick in die Weite.",w:"Bewegung baut Stress ab, der weite Blick beruhigt."},
+  {id:"breath",t:"Atemhilfe",d:"2 Min",how:"Länger ausatmen als einatmen, die Animation führt dich.",w:"Die lange Ausatmung aktiviert den beruhigenden Teil des Nervensystems.",run:"breath"},
+  {id:"shower",t:"Warme Dusche",d:"5 Min",how:"Wärme auf Nacken und Schultern, nur spüren.",w:"Wärme löst Muskelspannung und signalisiert Sicherheit."}]},
+ {id:"stress",t:"Stress / Druck",why:"Stress / Druck",under:"Der Körper ist im Handlungsmodus. Erst regulieren, dann entscheiden.",tools:[
+  {id:"breath",t:"Atemhilfe",d:"2 Min",how:"Länger ausatmen als einatmen, die Animation führt dich.",w:"Die lange Ausatmung bremst die Stressreaktion direkt.",run:"breath"},
+  {id:"shake",t:"Schütteln",d:"1 Min",how:"Arme, Beine, ganzer Körper locker ausschütteln. Danach still stehen und nachspüren.",w:"Baut aufgestaute Aktivierung ab, wie Tiere es nach Stress tun."},
+  {id:"cold",t:"Kaltes Wasser",d:"30 Sek",how:"Kaltes Wasser über die Handgelenke laufen lassen oder ins Gesicht.",w:"Ein starker, kurzer Reiz holt dich aus dem Kreisen."},
+  {id:"write",t:"Eine Sache aufschreiben",d:"3 Min",how:"Was drückt gerade am meisten? Und was ist der kleinste nächste Schritt dazu?",w:"Aus diffusem Druck wird etwas Greifbares."}]},
+ {id:"belastung",t:"Belastung betäuben",why:"Belastung betäuben",under:"Ein Gefühl wirkt gerade zu groß. Es darf da sein, und es geht vorbei.",feel:true,tools:[
+  {id:"name",t:"Gefühl benennen",d:"1 Min",how:"Sag innerlich: Da ist … Traurigkeit, Unruhe, Angst, Wut, Einsamkeit, Überforderung, Leere, Sorgen.",w:"Benennen dämpft die Alarmreaktion im Gehirn messbar."},
+  {id:"heart",t:"Hand aufs Herz",d:"2 Min",how:"Hand aufs Herz, langsam atmen und innerlich sagen: Das ist gerade schwer, und es darf da sein.",w:"Selbstberührung und Mitgefühl beruhigen, statt zu betäuben."},
+  {id:"wave",t:"Welle beobachten",d:"10 Min",how:"Den Impuls nicht bekämpfen, nur beobachten, wie er steigt und abebbt.",w:"Ein Verlangen dauert meist 10 bis 20 Minuten.",run:"wave"},
+  {id:"reach",t:"Jemanden erreichen",d:"5 Min",how:"Eine Nachricht oder Sprachnachricht an einen vertrauten Menschen.",w:"Verbindung trägt, was allein zu schwer ist."}]},
+ {id:"halt",t:"Halt gesucht",why:"Halt gesucht",under:"Darunter liegt oft ein Bedürfnis nach Sicherheit und Gehaltensein.",tools:[
+  {id:"pressure",t:"Druck und Gewicht",d:"3 Min",how:"Schwere Decke, feste Selbstumarmung oder den Rücken fest an eine Wand lehnen.",w:"Tiefer Druck gibt dem Körper ein Gefühl von Halt."},
+  {id:"warm",t:"Etwas Warmes trinken",d:"5 Min",how:"Tee oder warmes Wasser, beide Hände um die Tasse, Wärme spüren.",w:"Wärme in den Händen und im Bauch wirkt tröstend."},
+  {id:"ground",t:"5-4-3-2-1 / Erden",d:"2 Min",how:"Füße fest auf den Boden, dann Schritt für Schritt durch die Sinne.",w:"Holt dich ins Hier und Jetzt, wo du sicher bist.",run:"ground"},
+  {id:"voice",t:"Vertraute Stimme",d:"5 Min",how:"Jemanden anrufen, eine Sprachnachricht hören oder Lieblingsmusik.",w:"Vertraute Stimmen regulieren das Nervensystem."}]},
+ {id:"heiss",t:"Heißhunger",why:"Heißhunger",under:"Oft echter Mehrbedarf, besonders an PMS-Tagen, oder Erschöpfung.",tools:[
+  {id:"signal",t:"Signal im Magen prüfen",d:"1 Min",how:"Hand auf den Bauch: Ist da Leere, Rumoren, Knurren? Wenn ja, ist es Hunger, und du darfst essen.",w:"Echter Hunger ist ein Signal, kein Gegner."},
+  {id:"pms",t:"PMS-Tag?",d:"",how:"In der zweiten Zyklushälfte ist mehr Hunger körperlich echt. Selbstfreundlichkeit statt Kampf.",w:"Der Energiebedarf steigt in dieser Phase leicht an."},
+  {id:"wave",t:"Welle beobachten",d:"10 Min",how:"Wenn kein Magensignal da ist: ein Glas Wasser und den Impuls beobachten.",w:"Ein Verlangen ebbt meist nach 10 bis 20 Minuten ab.",run:"wave"},
+  {id:"mindful",t:"Bewusst essen",d:"",how:"Wenn du isst: sitzend, Teller, langsam, ohne Schuld.",w:"Bewusst gegessen ist es meist weniger, und es bleibt keine Scham."}]},
+ {id:"bett",t:"Abends im Bett",why:null,under:"Oft fehlt der gewohnte Zustand von Fülle als Signal für Ruhe. Es kann aber auch ein Hinweis sein, dass der Tag zu wenig Essen hatte.",tools:[
+  {id:"signal",t:"Ehrlich prüfen",d:"1 Min",how:"Ist da ein echtes Signal im Magen? Wenn ja, iss eine Kleinigkeit in Ruhe. Das ist erlaubt.",w:"Gedanken ans Essen können auch ein echtes Signal sein."},
+  {id:"belly",t:"Hand auf den Bauch",d:"3 Min",how:"Wärme spüren, langsam ausatmen und innerlich sagen: Für heute ist gesorgt.",w:"Gibt dem Körper das Gefühl von Ruhe, das sonst die Fülle gegeben hat."},
+  {id:"breath",t:"Atemhilfe",d:"2 Min",how:"Länger ausatmen als einatmen, die Animation führt dich.",w:"Hilft beim Übergang in den Schlaf.",run:"breath"},
+  {id:"park",t:"Gedanken parken",d:"2 Min",how:"Die Gedanken kurz notieren und für morgen zur Seite legen. Morgen beim Tracking schauen: Hatte der Tag genug Essen?",w:"Was aufgeschrieben ist, muss der Kopf nicht festhalten."}]}
+];
+const KEY_OWN="tenten.akut.own.v1", KEY_HELP="tenten.akut.helped.v1";
+const ls=(k,d)=>{try{const r=localStorage.getItem(k);return r?JSON.parse(r):d}catch(e){return d}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let akArea=null, akCur=0, akTools=[];
+function akShow(part){["start","unsure","area"].forEach(x=>$("ak-"+x).hidden=x!==part)}
+function openAkut(){ setView("akut"); akShow("start"); window.scrollTo({top:0});
+  $("ak-tiles").innerHTML=AKUT.map(a=>`<button type="button" class="tile" data-a="${a.id}">${a.t}</button>`).join("")+`<button type="button" class="tile soft" data-a="?">Ich weiß es nicht</button>`;
+  $("ak-tiles").querySelectorAll(".tile").forEach(b=>b.onclick=()=>b.dataset.a==="?"?akUnsure():akOpen(b.dataset.a));
+}
+$("akut-open").onclick=openAkut;
+const AKQ=[["hungrig","Hungrig"],["angespannt","Angespannt oder wütend"],["einsam","Einsam oder traurig"],["muede","Müde"]];
+let akQ=[];
+function akUnsure(){ akQ=[]; akShow("unsure"); $("ak-q-hunger").hidden=true; renderAkQ() }
+function renderAkQ(){ const el=$("ak-q"); el.innerHTML=""; el.appendChild(makeChipsPlain(AKQ.map(x=>x[1]),akQ,renderAkQ)) }
+$("ak-q-back").onclick=()=>akShow("start");
+$("ak-q-go").onclick=()=>{
+  const has=l=>akQ.includes(AKQ.find(x=>x[0]===l)[1]);
+  if(has("hungrig")){ $("ak-q-hunger").hidden=false; return }
+  akOpen(has("angespannt")?"stress":has("einsam")?"halt":has("muede")?"energie":"belastung");
+};
+$("ak-q-eat").onclick=()=>{resetForm();setView("add")};
+function akOpen(id){
+  akArea=AKUT.find(a=>a.id===id); akCur=0; akShow("area");
+  $("ak-title").textContent=akArea.t; $("ak-under").textContent=akArea.under;
+  renderAkOwn(); renderAkTools(); window.scrollTo({top:0});
+}
+$("ak-back").onclick=()=>akShow("start");
+function renderAkOwn(){
+  const own=ls(KEY_OWN,{}), list=own[akArea.id]||[];
+  $("ak-own").innerHTML=list.length?list.map((t,i)=>`<li><span>${esc(t)}</span><button type="button" data-i="${i}" aria-label="Entfernen">×</button></li>`).join(""):`<li class="hint">Noch nichts eingetragen. Was hilft dir hier wirklich?</li>`;
+  $("ak-own").querySelectorAll("button").forEach(b=>b.onclick=()=>{list.splice(+b.dataset.i,1);own[akArea.id]=list;lsSet(KEY_OWN,own);renderAkOwn()});
+}
+$("ak-own-add").onclick=()=>{ const v=$("ak-own-in").value.trim(); if(!v)return; const own=ls(KEY_OWN,{}); (own[akArea.id]=own[akArea.id]||[]).unshift(v); lsSet(KEY_OWN,own); $("ak-own-in").value=""; renderAkOwn() };
+$("ak-own-in").addEventListener("keydown",e=>{if(e.key==="Enter")$("ak-own-add").click()});
+function renderAkTools(){
+  const help=ls(KEY_HELP,{});
+  akTools=akArea.tools.map((t,i)=>({...t,i,n:help[akArea.id+":"+t.id]||0})).sort((a,b)=>b.n-a.n||a.i-b.i);
+  $("ak-tools").innerHTML=akTools.map((t,i)=>`<div class="tool ${i===akCur?"cur":""}" id="akt-${i}">
+    <div class="row between"><h3>${t.t}</h3><span class="hint">${t.d}</span></div>
+    <p>${t.how}</p><p class="wy">${t.w}</p>
+    <div class="row">${t.run?`<button type="button" class="mini go" data-run="${t.run}">Starten</button>`:""}<button type="button" class="mini" data-help="${t.id}">${t.n?`Hat geholfen · ${t.n}`:"Hat geholfen"}</button></div></div>`).join("");
+  $("ak-tools").querySelectorAll("[data-run]").forEach(b=>b.onclick=()=>RUN[b.dataset.run]());
+  $("ak-tools").querySelectorAll("[data-help]").forEach(b=>b.onclick=()=>{const h=ls(KEY_HELP,{}),k=akArea.id+":"+b.dataset.help;h[k]=(h[k]||0)+1;lsSet(KEY_HELP,h);toast("Gemerkt");renderAkTools()});
+}
+$("ak-next").onclick=()=>{ akCur=(akCur+1)%akTools.length; renderAkTools(); const el=$("akt-"+akCur); if(el)el.scrollIntoView({behavior:"smooth",block:"center"}) };
+$("ak-done").onclick=()=>{ toast("Gut gemacht. Der Impuls ist vorbeigezogen."); setView("add") };
+$("ak-eat").onclick=()=>{ resetForm(); if(akArea&&akArea.why){form.whyH=[akArea.why];form.touchedH=true} setView("add"); renderForm(); window.scrollTo({top:0}) };
+
+/* Begleitungen mit Animation */
+let ovTimers=[], wake=null;
+function ovOpen(html){ const o=$("ov"); o.innerHTML=html; o.hidden=false; try{navigator.wakeLock&&navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{})}catch(e){} }
+function ovClose(){ ovTimers.forEach(t=>{clearTimeout(t);clearInterval(t)}); ovTimers=[]; $("ov").hidden=true; $("ov").innerHTML=""; try{wake&&wake.release()}catch(e){} wake=null }
+const mmss=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+const RUN={
+  breath(){
+    ovOpen(`<h2>Atmen</h2><div class="bc" id="bc"><span id="bc-t">Ein</span></div><div class="big" id="bc-left">2:00</div><p class="hint" style="max-width:30ch;margin:0">4 Sekunden ein, 6 Sekunden aus. Wenn es zu lang ist, atme einfach so, wie es geht.</p><button type="button" class="btn ghost" id="ov-x">Beenden</button>`);
+    $("ov-x").onclick=ovClose; let left=120; const bc=$("bc"), tx=$("bc-t");
+    const cycle=()=>{ bc.style.transitionDuration="4s"; bc.style.transform="scale(1)"; tx.textContent="Ein";
+      ovTimers.push(setTimeout(()=>{ bc.style.transitionDuration="6s"; bc.style.transform="scale(.55)"; tx.textContent="Aus" },4000)) };
+    requestAnimationFrame(()=>requestAnimationFrame(cycle)); ovTimers.push(setInterval(cycle,10000));
+    ovTimers.push(setInterval(()=>{ left--; $("bc-left").textContent=mmss(Math.max(0,left));
+      if(left<=0){ ovTimers.forEach(t=>{clearTimeout(t);clearInterval(t)}); ovTimers=[]; tx.textContent="Gut"; $("bc-left").textContent="Fertig"; $("ov-x").textContent="Schließen" } },1000));
+  },
+  wave(){
+    let pts=""; for(let x=0;x<=800;x+=10) pts+=`${x===0?"M":"L"}${x},${60+40*Math.sin(x/400*2*Math.PI*2)} `;
+    ovOpen(`<h2>Welle beobachten</h2><div class="wave"><svg viewBox="0 0 800 120" preserveAspectRatio="none" id="wv"><path d="${pts}"/></svg></div><div class="big" id="wv-left">10:00</div>
+      <p style="max-width:32ch;margin:0" id="wv-txt">Du musst nichts tun. Spür, wo der Impuls im Körper sitzt, und beobachte, wie er sich verändert.</p>
+      <div class="chips" id="wv-q" hidden style="justify-content:center"></div>
+      <button type="button" class="btn ghost" id="ov-x">Beenden</button>`);
+    $("ov-x").onclick=ovClose; const total=600; let left=total; const svg=$("wv");
+    ovTimers.push(setInterval(()=>{ left--; $("wv-left").textContent=mmss(Math.max(0,left));
+      svg.style.transform=`scaleY(${(0.25+0.75*left/total).toFixed(3)})`;
+      if(left===300||left===60){ $("wv-txt").textContent="Wie stark ist es jetzt?"; const q=$("wv-q"); q.hidden=false;
+        q.innerHTML=["Stark","Mittel","Leicht","Weg"].map(v=>`<button type="button" class="chip" data-v="${v}">${v}</button>`).join("");
+        q.querySelectorAll("button").forEach(b=>b.onclick=()=>{ q.hidden=true;
+          if(b.dataset.v==="Weg"){ left=0; $("wv-txt").textContent="Die Welle ist abgeebbt. Gut gemacht." }
+          else $("wv-txt").textContent=b.dataset.v==="Stark"?"Das ist in Ordnung. Bleib beim Atmen, sie wird kleiner.":"Merkst du, wie sie sich verändert? Bleib noch ein wenig dabei." }) }
+      if(left<=0){ ovTimers.forEach(t=>clearInterval(t)); ovTimers=[]; svg.style.transform="scaleY(.15)"; $("wv-left").textContent="Fertig"; $("ov-x").textContent="Schließen";
+        if(!/abgeebbt/.test($("wv-txt").textContent)) $("wv-txt").textContent="Zehn Minuten sind um. Wie ist es jetzt?" } },1000));
+  },
+  ground(){
+    const ST=[[5,"Dinge, die du siehst","Lass den Blick langsam wandern und benenne sie innerlich."],[4,"Dinge, die du hörst","Nahe und ferne Geräusche."],[3,"Dinge, die du spürst","Füße auf dem Boden, Kleidung auf der Haut, die Luft."],[2,"Dinge, die du riechst","Auch wenn es nur ganz schwach ist."],[1,"Ding, das du schmeckst","Oder einfach den eigenen Mund."]];
+    let i=0;
+    const draw=()=>{ if(i>=ST.length){ ovOpen(`<h2>Du bist hier</h2><p style="max-width:30ch;margin:0">Spür noch einmal deine Füße auf dem Boden und nimm einen langen Atemzug aus.</p><button type="button" class="btn" id="ov-x">Schließen</button>`); $("ov-x").onclick=ovClose; return }
+      const [n,t,h]=ST[i]; ovOpen(`<div class="steps-n">${n}</div><h2>${t}</h2><p style="max-width:30ch;margin:0" class="hint">${h}</p>
+        <div class="row" style="justify-content:center"><button type="button" class="btn" id="ov-next">Weiter</button><button type="button" class="btn ghost" id="ov-x">Beenden</button></div>`);
+      $("ov-next").onclick=()=>{i++;draw()}; $("ov-x").onclick=ovClose };
+    draw();
+  }
+};
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("ov").hidden) ovClose() });
+
 /* ---------- Ansichten ---------- */
 function setView(v){
   view=v;
   document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.view===v));
-  ["add","day","week","data","fill"].forEach(x=>$("v-"+x).hidden=x!==v);
-  renderTrack();
+  ["add","day","week","data","fill","akut"].forEach(x=>$("v-"+x).hidden=x!==v);
+  $("track").hidden=(v==="akut"); if(v!=="akut") renderTrack();
   if(v==="day")renderDay(); if(v==="week")renderWeek(); if(v==="data")renderData();
 }
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{if(b.dataset.view==="add"&&editingId)resetForm();setView(b.dataset.view)});
