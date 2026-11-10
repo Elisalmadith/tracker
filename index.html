@@ -113,9 +113,13 @@ summary{font-weight:700;cursor:pointer}
 .entry .time{font-variant-numeric:tabular-nums;font-weight:700}
 .entry .meta{font-size:.85rem;color:var(--muted);min-width:0;overflow-wrap:anywhere}
 .letters{display:flex;gap:4px;flex-wrap:wrap}
-.lt{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.8rem;letter-spacing:-.02em;font-weight:700;border:1px solid var(--line);color:var(--muted);flex:none}
-.lt.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.lt.off{border-style:dashed;color:var(--danger);border-color:var(--danger)}
+.lt{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);color:var(--muted);flex:none}
+.lt.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.lt.off{border-style:dashed;color:#b9a79b;border-color:#cdbcb0;background:rgba(255,255,255,.4)}
+.lt.nour{background:#f3e3df;border-color:#e6c8c0;color:#b4594a}
+.missrow{display:flex;flex-wrap:wrap;gap:8px}
+.missrow>span{display:inline-flex;align-items:center;gap:4px}
+.missrow b{font-size:var(--fs-s)}
 .badge{font-variant-numeric:tabular-nums;font-weight:700;border-radius:999px;padding:4px 10px;background:var(--line)}
 .badge.full{background:var(--gold-soft);color:var(--gold)}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -301,6 +305,21 @@ details{border-top:0}
 #v-add .ck.focus{box-shadow:inset 0 0 0 2px #fff,0 0 0 1px rgba(61,106,85,.35)}
 #v-add .chip.n.ideal{border-color:var(--accent)}
 #v-add .score.full .big{color:#fff}
+/* Kalender */
+.cal-head,.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;text-align:center}
+.cal-head span{font-size:var(--fs-s);color:var(--muted);font-weight:600}
+.cd{aspect-ratio:1;max-width:100%;border:0;border-radius:50%;display:grid;place-items:center;font-size:var(--fs-s)!important;font-weight:600;font-variant-numeric:tabular-nums;background:transparent;color:var(--muted);padding:0}
+.cd.t{background:var(--accent);color:#fff}
+.cd.full{box-shadow:0 0 0 2.5px #d8b65e}
+.cd.r-gut{background:var(--accent-soft);color:var(--ink)} .cd.r-gemischt{background:var(--gold-soft);color:var(--ink)} .cd.r-schwer{background:var(--danger-soft);color:var(--ink)}
+.cd.open{box-shadow:inset 0 0 0 1.5px #b9c3bb;border:0;color:var(--ink)}
+.cd.future{opacity:.45}
+.cd.sel{outline:2px solid var(--ink);outline-offset:2px}
+.cd.today{text-decoration:underline;text-underline-offset:3px}
+.cal-key{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:var(--fs-s);color:var(--muted)}
+.cal-key span{display:inline-flex;align-items:center;gap:5px}
+.k{width:11px;height:11px;border-radius:50%;display:inline-block}
+.k.t{background:var(--accent)} .k.full{background:var(--accent);box-shadow:0 0 0 2px #d8b65e} .k.r-gut{background:var(--accent-soft);border:1px solid var(--accent)} .k.r-gemischt{background:var(--gold-soft);border:1px solid var(--gold)} .k.r-schwer{background:var(--danger-soft);border:1px solid var(--danger)} .k.open{box-shadow:inset 0 0 0 1.5px #b9c3bb}
 /* Liquid Glass überall */
 :root{--glass:rgba(255,255,255,.62);--fill:rgba(255,255,255,.55);--surface:rgba(255,255,255,.85)}
 .panel{background:linear-gradient(180deg,rgba(255,255,255,.80),rgba(255,255,255,.62))!important;-webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);
@@ -454,6 +473,17 @@ details{border-top:0}
     <div id="d-body"></div>
   </section>
 
+  <section id="v-cal" class="panel" hidden>
+    <div class="nav">
+      <button id="c-prev" aria-label="Vorheriger Monat">‹</button>
+      <h2 id="c-title">Monat</h2>
+      <button id="c-next" aria-label="Nächster Monat">›</button>
+    </div>
+    <div class="cal-head"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
+    <div class="cal" id="cal"></div>
+    <div class="cal-key"><span><i class="k t"></i>getrackt</span><span><i class="k full"></i>alles 5/5</span><span><i class="k r-gut"></i>gut</span><span><i class="k r-gemischt"></i>gemischt</span><span><i class="k r-schwer"></i>schwer</span><span><i class="k open"></i>offen</span></div>
+  </section>
+
   <section id="v-week" class="panel" hidden>
     <div class="nav">
       <button id="w-prev" aria-label="Vorherige Woche">‹</button>
@@ -509,6 +539,16 @@ const CRIT=[
   {k:"b",L:"A",de:"Ausgeglichen",hint:"Aufhören bei Stufe 5, nicht voll"}
 ];
 CRIT.forEach(c=>c.name=c.de);
+const SVG=d=>`<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ICON={
+  c:SVG('<path d="M3 9c2.5-2 4.5-2 7 0s4.5 2 7 0 3-1.5 4-1"/><path d="M3 15c2.5-2 4.5-2 7 0s4.5 2 7 0 3-1.5 4-1"/>'),
+  h:SVG('<path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M9 7c0-1.5 1-1.5 1-3M14 7c0-1.5 1-1.5 1-3"/>'),
+  t:SVG('<circle cx="12" cy="12" r="5.5"/><path d="M3.5 4v5a1.5 1.5 0 0 0 1.5 1.5M3.5 4v16M20.5 4c-1.5 1-2 3-2 5.5h2V20"/>'),
+  f:SVG('<rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M3 3l18 18"/>'),
+  b:SVG('<circle cx="12" cy="12" r="8"/><path d="M4 12h16"/><path d="M4.6 15h14.8M6.5 18h11" stroke-width="1.4"/>'),
+  n:SVG('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>')
+};
+const ico=(k,on)=>`<span class="lt ${on?"on":"off"}" title="${k==="n"?"Genährt":CRIT.find(c=>c.k===k).de}">${ICON[k]}</span>`;
 const MAX=CRIT.length;
 const val=(e,k)=>k==="t"?(e.t!==undefined?!!e.t:!!(e.p&&e.s)):!!e[k];
 /* Wochenplan: 4 Wochen im Wechsel */
@@ -538,7 +578,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=28;
+const APP_VERSION=29;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -717,7 +757,7 @@ $("del-yes").onclick=()=>{ entries=entries.filter(e=>e.id!==editingId); if(persi
 
 /* ---------- Tag ---------- */
 function inRange(a,b){return entries.filter(e=>e.ts>=a.getTime()&&e.ts<b.getTime()).sort((x,y)=>x.ts-y.ts)}
-function lettersHTML(e){return `<span class="letters">${CRIT.map(c=>`<span class="lt ${val(e,c.k)?"on":"off"}" title="${c.de}">${c.L}</span>`).join("")}${e.n?`<span class="hint" style="margin-left:4px">genährt</span>`:""}</span>`}
+function lettersHTML(e){return `<span class="letters">${CRIT.map(c=>ico(c.k,val(e,c.k))).join("")}${e.n?`<span class="lt nour" title="Genährt">${ICON.n}</span>`:""}</span>`}
 function missedList(list){return CRIT.map(c=>({c,miss:list.filter(e=>!val(e,c.k)).length})).filter(x=>x.miss>0).sort((a,b)=>b.miss-a.miss)}
 function renderDay(){
   const isToday=dkey(dayRef)===dkey(new Date());
@@ -736,7 +776,7 @@ function renderDay(){
   else{
     const full=list.filter(e=>scoreOf(e)===MAX).length, miss=missedList(list);
     let h=`<div class="stats"><div class="stat gold"><div class="label">Mahlzeiten mit ${MAX}/${MAX}</div><div class="v num">${full} von ${list.length}</div><div class="hint">${full===list.length?"alle geschafft":list.length-full===1?"eine noch nicht":(list.length-full)+" noch nicht"}</div></div>
-      <div class="stat"><div class="label">Gefehlt</div><div class="v" style="font-size:1.1rem;line-height:1.4;padding-top:6px">${miss.length?miss.map(m=>`${m.c.L} ${m.miss}×`).join(" · "):"nichts"}</div></div></div>`;
+      <div class="stat"><div class="label">Gefehlt</div><div class="v" style="font-size:1.1rem;line-height:1.4;padding-top:6px">${miss.length?`<span class="missrow">${miss.map(m=>`<span>${ico(m.c.k,false)}<b>${m.miss}×</b></span>`).join("")}</span>`:"nichts"}</div></div></div>`;
     h+=`<div class="crit">`+list.map((e,i)=>{
       const gap=i?`<div class="gap">↓ ${fmtDur(e.ts-list[i-1].ts)} später</div>`:"";
       const sc=scoreOf(e), meta=[];
@@ -757,8 +797,8 @@ function renderDay(){
   $("d-new").onclick=()=>{resetForm();setView("add")};
 }
 $("d-pms").onclick=()=>{togglePms(dkey(dayRef));renderDay()};
-$("d-prev").onclick=()=>{dayRef=addDays(dayRef,-1);renderDay()};
-$("d-next").onclick=()=>{dayRef=addDays(dayRef,1);renderDay()};
+$("d-prev").onclick=()=>{dayRef=addDays(dayRef,-1);calRef=new Date(dayRef.getFullYear(),dayRef.getMonth(),1);renderDay();renderCal()};
+$("d-next").onclick=()=>{dayRef=addDays(dayRef,1);calRef=new Date(dayRef.getFullYear(),dayRef.getMonth(),1);renderDay();renderCal()};
 
 /* ---------- Woche ---------- */
 function weekStats(ws){
@@ -787,6 +827,24 @@ function gapPattern(){
   return `<div><div class="label" style="margin-bottom:6px">Lücken der letzten 8 Wochen nach Wochentag</div><div class="wk">${WD.map((w,i)=>`<div class="day">${w}<b>${cnt[i]||"–"}</b></div>`).join("")}</div>
     <p class="hint" style="margin:6px 0 0">${tot} Tage ohne Mahlzeiten-Tracking${pms?`, davon ${pms} an PMS-Tagen`:""}.</p></div>`;
 }
+let calRef=new Date(new Date().getFullYear(),new Date().getMonth(),1);
+function renderCal(){
+  const y=calRef.getFullYear(), m=calRef.getMonth(), first=new Date(y,m,1), n=new Date(y,m+1,0).getDate(), tk=dkey(new Date()), fd=firstDay();
+  $("c-title").textContent=first.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
+  const now=new Date(); $("c-next").disabled=(y===now.getFullYear()&&m===now.getMonth());
+  let h=""; const lead=(first.getDay()+6)%7; for(let i=0;i<lead;i++) h+=`<span></span>`;
+  for(let d=1;d<=n;d++){
+    const dt=new Date(y,m,d), k=dkey(dt), st=dayState(k), list=inRange(dt,addDays(dt,1));
+    const full=list.length&&list.every(e=>scoreOf(e)===MAX);
+    let cls="cd "+(k>tk?"future":st==="t"?"t":st!=="open"?st:(fd&&k>=fd&&k<tk?"open":""));
+    if(full) cls+=" full"; if(k===tk) cls+=" today"; if(k===dkey(dayRef)) cls+=" sel";
+    h+=`<button type="button" class="${cls}" data-k="${k}" ${k>tk?"disabled":""} aria-label="${fmtDay(dt)}">${d}</button>`;
+  }
+  $("cal").innerHTML=h;
+  $("cal").querySelectorAll(".cd[data-k]").forEach(b=>b.onclick=()=>{ dayRef=startOfDay(new Date(b.dataset.k+"T12:00")); renderDay(); renderCal(); $("v-day").scrollIntoView({behavior:"smooth",block:"start"}) });
+}
+$("c-prev").onclick=()=>{calRef=new Date(calRef.getFullYear(),calRef.getMonth()-1,1);renderCal()};
+$("c-next").onclick=()=>{calRef=new Date(calRef.getFullYear(),calRef.getMonth()+1,1);renderCal()};
 function renderWeek(){
   const ws=weekRef, we=addDays(ws,6), isCur=dkey(ws)===dkey(weekStart(new Date()));
   $("w-title").textContent=isCur?"Diese Woche":`${fmtShort(ws)} – ${fmtShort(we)}`;
@@ -805,7 +863,7 @@ function renderWeek(){
   const weakest=s.per.filter(p=>p.hit===minHit&&p.hit<s.n);
   h+=`<div><div class="label" style="margin-bottom:8px">Erfüllt pro Kriterium</div><div class="bars">`+s.per.map(p=>{
     const w=Math.round(p.hit/s.n*100), weak=weakest.includes(p);
-    return `<div class="bar ${weak?"weak":""}"><span class="lt ${weak?"off":"on"}">${p.c.L}</span><div class="track"><div class="fill" style="width:${w}%"></div></div><span class="val">${p.hit}/${s.n} · ${w} %</span></div>`}).join("")+`</div></div>`;
+    return `<div class="bar ${weak?"weak":""}">${ico(p.c.k,!weak)}<div class="track"><div class="fill" style="width:${w}%"></div></div><span class="val">${p.hit}/${s.n} · ${w} %</span></div>`}).join("")+`</div></div>`;
   if(weakest.length){
     const names=weakest.map(p=>`<b>${p.c.de}</b>`).join(" und ");
     h+=`<div class="callout"><p>Am schwersten fiel dir diese Woche ${names}. ${weakest.length>1?"Sie fehlten":"Es fehlte"} bei ${s.n-minHit} von ${s.n} Mahlzeiten.</p></div>`;
@@ -1225,9 +1283,9 @@ function setView(v){
   view=v;
   document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.view===v));
   ["add","data","fill","akut"].forEach(x=>$("v-"+x).hidden=x!==v);
-  $("v-day").hidden=$("v-week").hidden=(v!=="review");
+  $("v-day").hidden=$("v-cal").hidden=(v!=="review"); $("v-week").hidden=true;
   $("track").hidden=(v==="akut"); $("actions").hidden=(v!=="add"); if(v!=="akut") renderTrack();
-  if(v==="review"){renderDay();renderWeek()} if(v==="data")renderData();
+  if(v==="review"){calRef=new Date(dayRef.getFullYear(),dayRef.getMonth(),1);renderDay();renderCal()} if(v==="data")renderData();
 }
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{if(b.dataset.view==="add"&&editingId)resetForm();setView(b.dataset.view)});
 
