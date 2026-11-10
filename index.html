@@ -289,6 +289,18 @@ details{border-top:0}
 .wrap,.ck b,.chip,.btn,.act,.tabs button,.seg button,.entry,.tile,.tool h3,.tool p,.boxitem summary,.callout p,input,textarea{font-size:var(--fs-m)!important}
 .label,.hint,small,.act small,.counts,.counts b,.ftip,.lt,.ftag,.badge,.day,.gap,.meta,.wy,.sub,.foot button,.mini{font-size:var(--fs-s)!important}
 .score .big{font-weight:600}
+/* Neue Mahlzeit als getöntes Liquid Glass wie der Fokus oben */
+#v-add.panel{background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,.10)),rgba(25,45,35,.24)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);border:1px solid rgba(255,255,255,.45)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 1px rgba(255,255,255,.15),0 8px 24px rgba(0,0,0,.18)!important;color:#fff}
+#v-add h2,#v-add .score,#v-add .score .big,#v-add>.row .hint,#v-add .scale>.hint,#v-add .scale .hint,#v-add .label,#v-add summary,#v-add .hs,#v-add .hs p,#v-add details>.hint{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+#v-add .scale .hint{opacity:.92}
+#v-add .ck,#v-add .seg,#v-add input[type="datetime-local"],#v-add textarea,#v-add .chip:not([aria-pressed="true"]),#v-add .mini{background:rgba(255,255,255,.72);color:var(--ink);border-color:rgba(255,255,255,.6)}
+#v-add .ck[aria-pressed="true"]{background:rgba(232,244,236,.92)}
+#v-add .ck.extra{background:rgba(255,255,255,.55)}
+#v-add .ck.focus{box-shadow:inset 0 0 0 2px #fff,0 0 0 1px rgba(61,106,85,.35)}
+#v-add .chip.n.ideal{border-color:var(--accent)}
+#v-add .score.full .big{color:#fff}
 /* Liquid Glass überall */
 :root{--glass:rgba(255,255,255,.62);--fill:rgba(255,255,255,.55);--surface:rgba(255,255,255,.85)}
 .panel{background:linear-gradient(180deg,rgba(255,255,255,.80),rgba(255,255,255,.62))!important;-webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);
@@ -526,7 +538,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=27;
+const APP_VERSION=28;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
