@@ -229,6 +229,9 @@ ul.plain{margin:0;padding-left:18px}
 .actions{display:flex;flex-direction:column;gap:10px}
 .act{display:flex;flex-direction:column;align-items:center;gap:1px;width:100%;border-radius:18px;padding:14px;font-weight:600;font-size:1.05rem}
 .act small{font-weight:400;font-size:.8rem;opacity:.85}
+.actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px!important}
+.actions .act{padding:14px 6px;justify-content:center;min-height:64px;line-height:1.2}
+.actions .act small{display:none}
 .act.solid{background:var(--accent);color:var(--accent-ink);border:0;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .ck{grid-template-columns:1fr auto!important}
 .ck.focus{box-shadow:inset 0 0 0 1.5px var(--accent)}
@@ -318,6 +321,8 @@ details{border-top:0}
 .focus-line .ftitle{color:#fff}
 /* Icons in der Liste */
 .ci{display:flex;align-items:center;gap:10px}
+.cico.half,.lt.half{background:linear-gradient(90deg,var(--accent) 50%,rgba(255,255,255,.6) 50%)!important;color:#1E2723;border:1px solid var(--accent)}
+.lt.half svg,.cico.half svg{filter:drop-shadow(0 0 1px rgba(255,255,255,.9))}
 .cico{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none;background:rgba(255,255,255,.55);color:#5d6a63}
 .cico svg{width:16px;height:16px}
 .ck[aria-pressed="true"] .cico{background:var(--accent);color:#fff}
@@ -397,6 +402,12 @@ details{border-top:0}
     <div class="row between"><span class="label">Letzte 14 Tage</span><span class="hint num" id="track-sum"></span></div>
     <div class="dots" id="dots"></div>
   </section>
+
+  <div class="actions" id="actions" hidden>
+    <button type="button" class="act glass" id="reg-open"><span>Regulieren</span><small>Atmen, ankommen, Werkzeuge</small></button>
+    <button type="button" class="act solid" id="eat-start"><span>Essen beginnen</span><small>mit Klang und Pause</small></button>
+    <button type="button" class="act glass" id="add-open"><span>Eintragen</span><small>Mahlzeit festhalten</small></button>
+  </div>
 
   <section class="glass prompt" id="gap-sec" hidden>
     <p style="margin:0" id="gap-text">Gestern fehlt noch. Magst du kurz einordnen, wie er war?</p>
@@ -511,12 +522,6 @@ details{border-top:0}
     <div class="rate" id="d-rate"></div>
   </section>
 
-  <div class="actions" id="actions" hidden>
-    <button type="button" class="act glass" id="reg-open"><span>Regulieren</span><small>Atmen, ankommen, Werkzeuge</small></button>
-    <button type="button" class="act solid" id="eat-start"><span>Essen beginnen</span><small>mit Klang und Pause</small></button>
-    <button type="button" class="act glass" id="add-open"><span>Eintragen</span><small>Mahlzeit festhalten</small></button>
-  </div>
-
   <section id="v-cal" class="panel" hidden>
     <div class="nav">
       <button id="c-prev" aria-label="Vorheriger Monat">‹</button>
@@ -592,7 +597,7 @@ const ICON={
   b:SVG('<circle cx="12" cy="12" r="8"/><path d="M4 12h16"/><path d="M4.6 15h14.8M6.5 18h11" stroke-width="1.4"/>'),
   n:SVG('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>')
 };
-const ico=(k,on)=>`<span class="lt ${on?"on":"off"}" title="${k==="n"?"Genährt":CRIT.find(c=>c.k===k).de}">${ICON[k]}</span>`;
+const ico=(k,on,hf)=>`<span class="lt ${on?"on":hf?"half":"off"}" title="${k==="n"?"Genährt":CRIT.find(c=>c.k===k).de}${hf?" (halb)":""}">${ICON[k]}</span>`;
 const MAX=CRIT.length;
 const val=(e,k)=>k==="t"?(e.t!==undefined?!!e.t:!!(e.p&&e.s)):!!e[k];
 /* Wochenplan: 4 Wochen im Wechsel */
@@ -622,7 +627,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=36;
+const APP_VERSION=38;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -636,7 +641,9 @@ const fmtDay=d=>d.toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month
 const fmtShort=d=>d.toLocaleDateString("de-DE",{day:"numeric",month:"short"});
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmtDur=ms=>{const m=Math.max(0,Math.round(ms/60000)),h=Math.floor(m/60),r=m%60;return h?(r?`${h} h ${r} min`:`${h} h`):`${r} min`};
-const scoreOf=e=>CRIT.reduce((a,c)=>a+(val(e,c.k)?1:0),0);
+const half=(e,k)=>!val(e,k)&&((k==="h"&&e.before===3)||(k==="b"&&e.after===6));
+const scoreOf=e=>CRIT.reduce((a,c)=>a+(val(e,c.k)?1:half(e,c.k)?0.5:0),0);
+const fmtS=n=>Number.isInteger(n)?String(n):n.toFixed(1).replace(".",",");
 const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 
 /* ---------- Speicher (nur auf diesem Gerät) ---------- */
@@ -690,7 +697,7 @@ function renderForm(){
   CRIT.forEach(c=>{
     const b=document.createElement("button"), scaleKey=c.k==="h"?"scaleH":"scaleB";
     b.type="button"; b.className="ck"+(c.k===fk?" focus":""); b.id="ck-"+c.k; b.setAttribute("aria-pressed",form[c.k]);
-    b.innerHTML=`<span class="t ci"><span class="cico">${ICON[c.k]}</span><b>${c.de}${c.k===fk?` <span class="ftag">Fokus</span>`:""}</b></span><span class="state" aria-label="${form[c.k]?"erfüllt":"offen"}">${form[c.k]?"✓":(c.k==="h"||c.k==="b")?"›":""}</span>`;
+    b.innerHTML=`<span class="t ci"><span class="cico${half(form,c.k)?" half":""}">${ICON[c.k]}</span><b>${c.de}${c.k===fk?` <span class="ftag">Fokus</span>`:""}</b></span><span class="state" aria-label="${form[c.k]?"erfüllt":half(form,c.k)?"halb":"offen"}">${form[c.k]?"✓":half(form,c.k)?"½":(c.k==="h"||c.k==="b")?"›":""}</span>`;
     b.onclick=()=>{ if(c.k==="h"||c.k==="b"){ form[scaleKey]=!form[scaleKey]; if(c.k==="h")form.touchedH=true; else form.touchedB=true }
       else form[c.k]=!form[c.k]; renderForm() };
     crit.appendChild(b);
@@ -737,7 +744,7 @@ function renderForm(){
   $("f-pms").setAttribute("aria-pressed",isPms(formDateKey()));
   const sc=scoreOf(form);
   $("score").className="score num"+(sc===MAX?" full":"");
-  $("score").querySelector(".big").textContent=sc;
+  $("score").querySelector(".big").textContent=fmtS(sc);
 }
 function activeWhy(){return [...(form.h?[]:form.whyH),...(form.b?[]:form.whyB)]}
 function formDateKey(){const v=$("f-when").value;return dkey(v?new Date(v):new Date())}
@@ -804,7 +811,7 @@ $("del-yes").onclick=()=>{ entries=entries.filter(e=>e.id!==editingId); if(persi
 
 /* ---------- Tag ---------- */
 function inRange(a,b){return entries.filter(e=>e.ts>=a.getTime()&&e.ts<b.getTime()).sort((x,y)=>x.ts-y.ts)}
-function lettersHTML(e){return `<span class="letters">${CRIT.map(c=>ico(c.k,val(e,c.k))).join("")}${e.n?`<span class="lt on" title="Genährt">${ICON.n}</span>`:""}</span>`}
+function lettersHTML(e){return `<span class="letters">${CRIT.map(c=>ico(c.k,val(e,c.k),half(e,c.k))).join("")}${e.n?`<span class="lt on" title="Genährt">${ICON.n}</span>`:""}</span>`}
 function missedList(list){return CRIT.map(c=>({c,miss:list.filter(e=>!val(e,c.k)).length})).filter(x=>x.miss>0).sort((a,b)=>b.miss-a.miss)}
 function renderDay(){
   const isToday=dkey(dayRef)===dkey(new Date());
@@ -833,7 +840,7 @@ function renderDay(){
       if(e.note) meta.push(esc(e.note));
       return `${gap}<button type="button" class="entry" data-id="${esc(e.id)}"><span class="time">${esc(e.time||"")}${e.meal?`<br><span class="meta" style="font-weight:400">${esc(e.meal)}</span>`:""}</span>
         <span style="display:flex;flex-direction:column;gap:6px;min-width:0">${lettersHTML(e)}${meta.length?`<span class="meta">${meta.join(" · ")}</span>`:""}</span>
-        <span class="badge ${sc===MAX?"full":""}">${sc}/${MAX}</span></button>`}).join("")+(isToday&&list[list.length-1].ts<=Date.now()?`<div class="gap">seitdem ${fmtDur(Date.now()-list[list.length-1].ts)}</div>`:"")+`</div>`;
+        <span class="badge ${sc===MAX?"full":""}">${fmtS(sc)}/${MAX}</span></button>`}).join("")+(isToday&&list[list.length-1].ts<=Date.now()?`<div class="gap">seitdem ${fmtDur(Date.now()-list[list.length-1].ts)}</div>`:"")+`</div>`;
     h+=`<p class="hint" style="margin:0">Eintrag antippen, um ihn zu ändern oder zu löschen.</p>${isToday?"":`<button type="button" class="btn ghost backfill" id="d-backfill">Weitere Mahlzeit nachtragen</button>`}`;
     body.innerHTML=h;
     body.querySelectorAll(".entry").forEach(b=>b.onclick=()=>{const e=entries.find(x=>x.id===b.dataset.id);if(e)editEntry(e)});
@@ -1327,9 +1334,10 @@ function praise(e){
   const sc=scoreOf(e);
   if(sc===MAX) return `${MAX} von ${MAX}. Alles im Einklang, schön.`;
   if(sc===0) return "Eingetragen. Auch das ist eine wertvolle Information.";
-  const fk=focus().k; if(val(e,fk)&&sc<MAX) return `${sc} von ${MAX}. Dein Wochenfokus hat geklappt: ${GOOD[fk]}.`;
+  const fk=focus().k; if(val(e,fk)&&sc<MAX) return `${fmtS(sc)} von ${MAX}. Dein Wochenfokus hat geklappt: ${GOOD[fk]}.`;
   const order=["b","h","c","f","t"], k=order.find(x=>val(e,x));
-  return `${sc} von ${MAX}. ${GOOD[k]} hat gut geklappt.`;
+  if(!k) return `${fmtS(sc)} von ${MAX}. Fast da, gut gespürt.`;
+  return `${fmtS(sc)} von ${MAX}. ${GOOD[k]} hat gut geklappt.`;
 }
 $("hs").innerHTML=HS.filter(r=>r[0]<=7).map(r=>`<li class="${r[0]===2||r[0]===5?"ideal":""}"><span class="lv">${r[0]===7?"7–10":r[0]}</span><div><b>${r[0]===7?"Übervoll bis vollgestopft":r[1]}</b><p>${r[0]===7?"Mehr gegessen als der Körper braucht. Blähungen, Trägheit, eventuell Reue.":r[2]}</p></div></li>`).join("");
 
