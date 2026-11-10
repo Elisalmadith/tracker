@@ -44,12 +44,12 @@ h2{font-size:1.4rem}
 button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
 button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-#bgimg{position:fixed;inset:0;z-index:-1;background:var(--bg) url("img/bg.jpg") 85% center/cover no-repeat}
+#bgimg{position:fixed;inset:0;z-index:-1;background:var(--bg) url("img/bg.jpg") center center/cover no-repeat}
 #bgimg::after{content:"";position:absolute;inset:0;background:var(--veil)}
 header h1,header .sub{color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.45),0 1px 2px rgba(0,0,0,.35)}
 header h1 em{color:#E7F0E2}
 .panel,.tabs{background:var(--glass);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
-#splash{position:fixed;inset:0;z-index:60;background:linear-gradient(180deg,rgba(10,25,12,.55) 0%,rgba(10,25,12,.15) 28%,rgba(0,0,0,0) 45%),#2f4a22 url("img/bg.jpg") 85% center/cover no-repeat;display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;cursor:pointer;
+#splash{position:fixed;inset:0;z-index:60;background:linear-gradient(180deg,rgba(10,25,12,.55) 0%,rgba(10,25,12,.15) 28%,rgba(0,0,0,0) 45%),#2f4a22 url("img/bg.jpg") center center/cover no-repeat;display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;cursor:pointer;
   padding:calc(56px + env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) calc(40px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));transition:opacity .7s ease}
 #splash.out{opacity:0;pointer-events:none}
 #splash h1{color:#fff;font-size:2.6rem;text-shadow:0 2px 18px rgba(0,0,0,.5)}
@@ -141,7 +141,7 @@ summary{font-weight:700;cursor:pointer}
 .empty b{display:block;color:var(--ink);font-family:var(--f-display);font-size:1.2rem;font-weight:500;margin-bottom:4px}
 header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .akut-btn{flex:none;margin-top:4px;padding:10px 20px;border-radius:999px;font-weight:700;letter-spacing:.02em;color:#fff;
-  background:linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,.12));
+  background:linear-gradient(180deg,rgba(255,255,255,.32),rgba(255,255,255,.10)),rgba(25,45,35,.22);
   -webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);
   border:1px solid rgba(255,255,255,.5);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -1px 1px rgba(255,255,255,.18),0 8px 24px rgba(0,0,0,.22);
@@ -224,7 +224,7 @@ ul.plain{margin:0;padding-left:18px}
 .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--fill);border-radius:12px;padding:3px}
 .seg button{border:0;background:transparent;border-radius:9px;padding:9px 2px;font-size:.9rem;font-weight:500;color:var(--ink)}
 .seg button[aria-pressed="true"]{background:var(--surface);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
-.tabs{background:linear-gradient(180deg,rgba(255,255,255,.32),rgba(255,255,255,.12));-webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);
+.tabs{background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,.10)),rgba(25,45,35,.22);-webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);
   border:1px solid rgba(255,255,255,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 1px rgba(255,255,255,.15),0 8px 24px rgba(0,0,0,.18)}
 .tabs button{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35)}
 .tabs button[aria-selected="true"]{background:rgba(255,255,255,.88);color:#24443A;text-shadow:none;box-shadow:0 2px 8px rgba(0,0,0,.12)}
@@ -474,7 +474,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=22;
+const APP_VERSION=23;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
