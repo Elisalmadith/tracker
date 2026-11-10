@@ -44,12 +44,12 @@ h2{font-size:1.4rem}
 button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
 button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-#bgimg{position:fixed;inset:0;z-index:-1;background:var(--bg) url("img/bg.jpg") center center/cover no-repeat}
+#bgimg{position:fixed;inset:0;z-index:-1;background:var(--bg) url("img/bg.jpg") 85% center/cover no-repeat}
 #bgimg::after{content:"";position:absolute;inset:0;background:var(--veil)}
 header h1,header .sub{color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.45),0 1px 2px rgba(0,0,0,.35)}
 header h1 em{color:#E7F0E2}
 .panel,.tabs{background:var(--glass);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
-#splash{position:fixed;inset:0;z-index:60;background:#2f4a22 url("img/start.jpg") 40% 34%/cover no-repeat;display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;cursor:pointer;
+#splash{position:fixed;inset:0;z-index:60;background:linear-gradient(180deg,rgba(10,25,12,.55) 0%,rgba(10,25,12,.15) 28%,rgba(0,0,0,0) 45%),#2f4a22 url("img/bg.jpg") 85% center/cover no-repeat;display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;cursor:pointer;
   padding:calc(56px + env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) calc(40px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));transition:opacity .7s ease}
 #splash.out{opacity:0;pointer-events:none}
 #splash h1{color:#fff;font-size:2.6rem;text-shadow:0 2px 18px rgba(0,0,0,.5)}
@@ -474,7 +474,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=21;
+const APP_VERSION=22;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
