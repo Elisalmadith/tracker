@@ -57,7 +57,7 @@ header h1 em{color:#E7F0E2}
 #splash p{margin:8px 0 0;color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.6);letter-spacing:.06em}
 #splash .tap{font-size:.9rem;font-weight:700;color:#fff;background:rgba(0,0,0,.28);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-radius:999px;padding:10px 18px}
 @media (prefers-reduced-motion:reduce){ #splash{transition:none} }
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
+.tabs{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
 .tabs button{border:0;background:transparent;border-radius:999px;padding:10px 2px;font-weight:700;font-size:.92rem;color:var(--muted)}
 .tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
 
@@ -202,6 +202,8 @@ ul.plain{margin:0;padding-left:18px}
 @media (max-width:420px){ .scale{padding-left:0} .stat .v{font-size:1.6rem} }
 @media (prefers-reduced-motion:no-preference){ .ck,.chip,.tabs button{transition:background .15s,border-color .15s,color .15s} }
 /* ---- iOS schlicht ---- */
+:root{--fs-l:1.3rem;--fs-m:1rem;--fs-s:.82rem}
+.ftag.muted{color:var(--muted);background:var(--fill)}
 .glass{border-radius:22px;padding:16px;color:#fff;background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,.10)),rgba(25,45,35,.24);
   -webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);border:1px solid rgba(255,255,255,.45);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 1px rgba(255,255,255,.15),0 8px 24px rgba(0,0,0,.18);text-shadow:0 1px 2px rgba(0,0,0,.25)}
@@ -284,6 +286,11 @@ h2{font-size:1.3rem}
 details{border-top:0}
 #splash h1{font-size:2rem;font-weight:600}
 #splash p{letter-spacing:0;font-size:1rem}
+/* drei Schriftgrößen */
+.wrap h1,.wrap h2,.ftitle,.score .big,.stat .v,.nav h2,.empty b{font-size:var(--fs-l)!important;line-height:1.25}
+.wrap,.ck b,.chip,.btn,.act,.tabs button,.seg button,.entry,.tile,.tool h3,.tool p,.boxitem summary,.callout p,input,textarea{font-size:var(--fs-m)!important}
+.label,.hint,small,.act small,.counts,.counts b,.ftip,.lt,.ftag,.badge,.day,.gap,.meta,.wy,.sub,.foot button,.mini{font-size:var(--fs-s)!important}
+.score .big{font-weight:600}
 </style>
 </head>
 <body>
@@ -301,8 +308,7 @@ details{border-top:0}
 
   <div class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-view="add">Eintragen</button>
-    <button role="tab" aria-selected="false" data-view="day">Tag</button>
-    <button role="tab" aria-selected="false" data-view="week">Woche</button>
+    <button role="tab" aria-selected="false" data-view="review">Rückblick</button>
   </div>
 
   <div class="banner" id="banner" hidden></div>
@@ -311,13 +317,6 @@ details{border-top:0}
     <div class="focus-row" id="focus-row"></div>
     <div class="row between"><span class="label">Letzte 14 Tage</span><span class="hint num" id="track-sum"></span></div>
     <div class="dots" id="dots"></div>
-    <div class="legend">
-      <span><i style="background:#fff"></i>getrackt</span>
-      <span><i style="background:var(--accent-soft);border:1px solid var(--accent)"></i>gut</span>
-      <span><i style="background:var(--gold-soft);border:1px solid var(--gold)"></i>gemischt</span>
-      <span><i style="background:var(--danger-soft);border:1px solid var(--danger)"></i>schwer</span>
-      <span><i style="border:1px dashed rgba(255,255,255,.9)"></i>offen</span>
-    </div>
     <div class="prompt" id="gap-prompt" hidden>
       <p style="margin:0" id="gap-text">Gestern fehlt noch. Magst du kurz einordnen, wie er war?</p>
       <div class="row"><button type="button" class="btn" id="gap-yes">Einordnen</button><button type="button" class="btn ghost" id="gap-no">Überspringen</button></div>
@@ -403,9 +402,9 @@ details{border-top:0}
       <div class="label" style="margin-bottom:6px">Welches Gefühl war da? (optional)</div>
       <div class="chips" id="feel"></div>
     </div>
-    <div>
-      <label class="label" for="f-note">Notiz (optional)</label>
-      <textarea id="f-note" placeholder="Was ist dir aufgefallen?"></textarea>
+    <div id="note-wrap">
+      <button type="button" class="mini" id="note-toggle" aria-expanded="false">Notiz hinzufügen</button>
+      <textarea id="f-note" placeholder="Was ist dir aufgefallen?" aria-label="Notiz" hidden></textarea>
     </div>
     <div class="row">
       <button class="btn" id="save">Speichern</button>
@@ -518,7 +517,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=25;
+const APP_VERSION=26;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -585,7 +584,7 @@ function renderForm(){
   CRIT.forEach(c=>{
     const b=document.createElement("button"), scaleKey=c.k==="h"?"scaleH":"scaleB";
     b.type="button"; b.className="ck"+(c.k===fk?" focus":""); b.id="ck-"+c.k; b.setAttribute("aria-pressed",form[c.k]);
-    b.innerHTML=`<span class="t"><b>${c.de}${c.k===fk?` <span class="ftag">Fokus</span>`:""}</b><small>${c.hint}</small></span><span class="state" aria-label="${form[c.k]?"erfüllt":"offen"}">${form[c.k]?"✓":(c.k==="h"||c.k==="b")?"›":""}</span>`;
+    b.innerHTML=`<span class="t"><b>${c.de}${c.k===fk?` <span class="ftag">Fokus</span>`:""}</b></span><span class="state" aria-label="${form[c.k]?"erfüllt":"offen"}">${form[c.k]?"✓":(c.k==="h"||c.k==="b")?"›":""}</span>`;
     b.onclick=()=>{ if(c.k==="h"||c.k==="b"){ form[scaleKey]=!form[scaleKey]; if(c.k==="h")form.touchedH=true; else form.touchedB=true }
       else form[c.k]=!form[c.k]; renderForm() };
     crit.appendChild(b);
@@ -619,7 +618,7 @@ function renderForm(){
     }
   });
   const nb=document.createElement("button"); nb.type="button"; nb.className="ck extra"; nb.setAttribute("aria-pressed",form.n);
-  nb.innerHTML=`<span class="t"><b>Genährt</b><small>Lecker und freudig. Zählt extra, nicht zum Ergebnis.</small></span><span class="state">${form.n?"✓":""}</span>`;
+  nb.innerHTML=`<span class="t"><b>Genährt <span class="ftag muted">Extra</span></b></span><span class="state">${form.n?"✓":""}</span>`;
   nb.onclick=()=>{form.n=!form.n;renderForm()}; crit.appendChild(nb);
   const mel=$("meal"); mel.innerHTML="";
   const SHORT={"Mittagessen":"Mittag","Abendessen":"Abend"};
@@ -655,7 +654,7 @@ function renderSince(){
   const now=Date.now(), past=entries.filter(e=>e.ts<=now).sort((a,b)=>b.ts-a.ts)[0];
   $("since").textContent=(!editingId&&past)?(now-past.ts<864e5?`Letzte Mahlzeit vor ${fmtDur(now-past.ts)}`:`Letzte Mahlzeit: ${fmtDay(new Date(past.ts))}`):"";
 }
-setInterval(()=>{ refreshWhen(); if(view==="add")renderSince(); if(view==="day")renderDay() },60000);
+setInterval(()=>{ refreshWhen(); if(view==="add")renderSince(); if(view==="review")renderDay() },60000);
 function chipGroup(id,list,arr){
   const el=$(id); el.innerHTML="";
   list.forEach(t=>{
@@ -666,14 +665,16 @@ function chipGroup(id,list,arr){
   });
 }
 $("f-note").addEventListener("input",e=>form.note=e.target.value);
+function setNoteOpen(o){ $("f-note").hidden=!o; $("note-toggle").hidden=o; $("note-toggle").setAttribute("aria-expanded",o) }
+$("note-toggle").onclick=()=>{ setNoteOpen(true); $("f-note").focus() };
 
-function resetForm(){form=blank();editingId=null;whenTouched=false;$("f-when").value=toInput(new Date());$("f-note").value="";$("del-confirm").hidden=true;renderForm()}
+function resetForm(){form=blank();editingId=null;whenTouched=false;$("f-when").value=toInput(new Date());$("f-note").value="";setNoteOpen(false);$("del-confirm").hidden=true;renderForm()}
 function editEntry(e){
   editingId=e.id;
   form=blank(); CRIT.forEach(c=>form[c.k]=val(e,c.k)); form.n=!!e.n;
   form.before=e.before??null; form.meal=e.meal??null; form.after=e.after??null; form.reg=[...(e.reg||[])]; form.whyH=[...(e.whyH||[])]; form.whyB=[...(e.whyB||[])]; form.feelings=[...(e.feelings||[])]; form.legacy=[...(e.triggers||[])];
   form.touchedH=form.whyH.length>0||!e.h; form.touchedB=form.whyB.length>0||!e.b; form.note=e.note||"";
-  $("f-when").value=toInput(new Date(e.ts)); $("f-note").value=form.note; $("del-confirm").hidden=true;
+  $("f-when").value=toInput(new Date(e.ts)); $("f-note").value=form.note; setNoteOpen(!!form.note); $("del-confirm").hidden=true;
   setView("add"); renderForm(); window.scrollTo({top:0});
 }
 $("save").onclick=()=>{
@@ -1199,11 +1200,13 @@ const EAT=(()=>{
 
 /* ---------- Ansichten ---------- */
 function setView(v){
+  if(v==="day"||v==="week") v="review";
   view=v;
   document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.view===v));
-  ["add","day","week","data","fill","akut"].forEach(x=>$("v-"+x).hidden=x!==v);
+  ["add","data","fill","akut"].forEach(x=>$("v-"+x).hidden=x!==v);
+  $("v-day").hidden=$("v-week").hidden=(v!=="review");
   $("track").hidden=(v==="akut"); $("actions").hidden=(v!=="add"); if(v!=="akut") renderTrack();
-  if(v==="day")renderDay(); if(v==="week")renderWeek(); if(v==="data")renderData();
+  if(v==="review"){renderDay();renderWeek()} if(v==="data")renderData();
 }
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{if(b.dataset.view==="add"&&editingId)resetForm();setView(b.dataset.view)});
 
