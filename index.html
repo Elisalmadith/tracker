@@ -309,6 +309,11 @@ details{border-top:0}
 #v-add .ck.focus{box-shadow:inset 0 0 0 2px #fff,0 0 0 1px rgba(61,106,85,.35)}
 #v-add .chip.n.ideal{border-color:var(--accent)}
 #v-add .score.full .big{color:#fff}
+.back{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.22);color:#fff;font-size:1.3rem;line-height:1;display:grid;place-items:center;padding:0 0 2px}
+#v-akut .back{color:var(--ink);background:var(--fill);border-color:var(--line)}
+.focus-line{display:flex;flex-direction:column;gap:2px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.3)}
+.focus-line .label,.focus-line .counts{color:#fff}
+.focus-line .ftitle{color:#fff}
 /* Icons in der Liste */
 .ci{display:flex;align-items:center;gap:10px}
 .cico{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none;background:rgba(255,255,255,.55);color:#5d6a63}
@@ -382,31 +387,24 @@ details{border-top:0}
     <button type="button" class="akut-btn" id="akut-open">Akut</button>
   </header>
 
-  <div class="tabs" role="tablist">
-    <button role="tab" aria-selected="true" data-view="add">Eintragen</button>
-    <button role="tab" aria-selected="false" data-view="review">Übersicht</button>
-  </div>
 
   <div class="banner" id="banner" hidden></div>
 
   <section class="track14 glass" id="track" hidden>
-    <div class="focus-row" id="focus-row"></div>
+    <div id="old-focus"></div>
     <div class="row between"><span class="label">Letzte 14 Tage</span><span class="hint num" id="track-sum"></span></div>
     <div class="dots" id="dots"></div>
-    <div class="prompt" id="gap-prompt" hidden>
-      <p style="margin:0" id="gap-text">Gestern fehlt noch. Magst du kurz einordnen, wie er war?</p>
-      <div class="row"><button type="button" class="btn" id="gap-yes">Einordnen</button><button type="button" class="btn ghost" id="gap-no">Überspringen</button></div>
-    </div>
   </section>
 
-  <div class="actions" id="actions">
-    <button type="button" class="act glass" id="reg-open"><span>Regulieren</span><small>Atmen, ankommen, Werkzeuge</small></button>
-    <button type="button" class="act solid" id="eat-start"><span>Essen beginnen</span><small>mit Klang und Pause</small></button>
-  </div>
+  <section class="glass prompt" id="gap-sec" hidden>
+    <p style="margin:0" id="gap-text">Gestern fehlt noch. Magst du kurz einordnen, wie er war?</p>
+    <div class="row"><button type="button" class="btn" id="gap-yes">Einordnen</button><button type="button" class="btn ghost" id="gap-no">Überspringen</button></div>
+  </section>
+
 
   <section id="v-akut" class="panel" hidden>
     <div id="ak-start">
-      <h2 style="margin-bottom:4px">Was ist gerade da?</h2>
+      <div class="row" style="flex-wrap:nowrap;gap:10px;margin-bottom:4px"><button type="button" class="back" id="ak-home" aria-label="Zurück">‹</button><h2>Was ist gerade da?</h2></div>
       <p class="hint" style="margin:0 0 12px">Kurz innehalten. Du musst jetzt nichts entscheiden.</p>
       <div class="tiles" id="ak-tiles"></div>
       <div style="margin-top:20px;border-top:1px solid var(--line);padding-top:14px">
@@ -468,7 +466,7 @@ details{border-top:0}
 
   <section id="v-add" class="panel">
     <div class="row between">
-      <div><h2 id="form-title">Neue Mahlzeit</h2><div class="hint num" id="since"></div></div>
+      <div class="row" style="flex-wrap:nowrap;gap:10px"><button type="button" class="back" id="add-back" aria-label="Zurück">‹</button><div><h2 id="form-title">Neue Mahlzeit</h2><div class="hint num" id="since"></div></div></div>
       <div class="score num" id="score"><span class="big">0</span><span>/ 5</span></div>
     </div>
     <div class="when-row"><input type="datetime-local" id="f-when" aria-label="Wann"><button type="button" class="chip" id="f-pms" aria-pressed="false">PMS</button></div>
@@ -500,6 +498,7 @@ details{border-top:0}
   </section>
 
   <section id="v-day" class="panel" hidden>
+    <div class="focus-line" id="focus-row"></div>
     <div class="nav">
       <button id="d-prev" aria-label="Vorheriger Tag">‹</button>
       <h2 id="d-title">Heute</h2>
@@ -509,6 +508,12 @@ details{border-top:0}
     <div id="d-body"></div>
     <div class="rate" id="d-rate"></div>
   </section>
+
+  <div class="actions" id="actions" hidden>
+    <button type="button" class="act glass" id="reg-open"><span>Regulieren</span><small>Atmen, ankommen, Werkzeuge</small></button>
+    <button type="button" class="act solid" id="eat-start"><span>Essen beginnen</span><small>mit Klang und Pause</small></button>
+    <button type="button" class="act glass" id="add-open"><span>Eintragen</span><small>Mahlzeit festhalten</small></button>
+  </div>
 
   <section id="v-cal" class="panel" hidden>
     <div class="nav">
@@ -615,7 +620,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=34;
+const APP_VERSION=35;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -752,7 +757,7 @@ function renderSince(){
   const now=Date.now(), past=entries.filter(e=>e.ts<=now).sort((a,b)=>b.ts-a.ts)[0];
   $("since").textContent=(!editingId&&past)?(now-past.ts<864e5?`Letzte Mahlzeit vor ${fmtDur(now-past.ts)}`:`Letzte Mahlzeit: ${fmtDay(new Date(past.ts))}`):"";
 }
-setInterval(()=>{ refreshWhen(); if(view==="add")renderSince(); if(view==="review")renderDay() },60000);
+setInterval(()=>{ refreshWhen(); if(view==="add")renderSince(); if(view==="home")renderDay() },60000);
 function chipGroup(id,list,arr){
   const el=$(id); el.innerHTML="";
   list.forEach(t=>{
@@ -785,12 +790,14 @@ $("save").onclick=()=>{
   CRIT.forEach(c=>body[c.k]=form[c.k]); body.n=form.n; body.p=body.s=form.t;
   const i=entries.findIndex(e=>e.id===body.id);
   if(i>=0)entries[i]=body; else entries.push(body);
-  if(persist()){ renderTrack(); toast(praise(body),3600); dayRef=startOfDay(when); resetForm(); }
+  if(persist()){ renderTrack(); toast(praise(body),3600); dayRef=startOfDay(when); resetForm(); setView("home"); window.scrollTo({top:0}); }
 };
-$("cancel").onclick=resetForm;
+$("cancel").onclick=()=>{resetForm();setView("home")};
+$("add-back").onclick=()=>{ if(editingId) resetForm(); setView("home"); window.scrollTo({top:0}) };
+$("add-open").onclick=()=>{ if(editingId) resetForm(); setView("add"); window.scrollTo({top:0}) };
 $("del").onclick=()=>{$("del-confirm").hidden=false};
 $("del-no").onclick=()=>{$("del-confirm").hidden=true};
-$("del-yes").onclick=()=>{ entries=entries.filter(e=>e.id!==editingId); if(persist()){renderTrack();toast("Gelöscht");resetForm()} };
+$("del-yes").onclick=()=>{ entries=entries.filter(e=>e.id!==editingId); if(persist()){toast("Gelöscht");resetForm();setView("home")} };
 
 /* ---------- Tag ---------- */
 function inRange(a,b){return entries.filter(e=>e.ts>=a.getTime()&&e.ts<b.getTime()).sort((x,y)=>x.ts-y.ts)}
@@ -807,7 +814,7 @@ function renderDay(){
   if(!list.length){
     const k=dkey(dayRef), r=rating(k), d=days[k]||{};
     const extra=(d.why&&d.why.length)||d.note?`<p class="hint" style="margin:0">${d.why&&d.why.length?esc(d.why.join(", ")):""}${d.note?(d.why&&d.why.length?" · ":"")+esc(d.note):""}</p>`:"";
-    body.innerHTML=`<div class="empty"><b>${isToday?"Noch keine Mahlzeit":"Keine Mahlzeiten eingetragen"}</b></div>${extra}<div class="row">${newBtn}</div>`;
+    body.innerHTML=`<div class="empty"><b>${isToday?"Noch keine Mahlzeit":"Keine Mahlzeiten eingetragen"}</b></div>${extra}`;
   }
   else{
     let h=`<div class="crit">`+list.map((e,i)=>{
@@ -823,11 +830,11 @@ function renderDay(){
       return `${gap}<button type="button" class="entry" data-id="${esc(e.id)}"><span class="time">${esc(e.time||"")}${e.meal?`<br><span class="meta" style="font-weight:400">${esc(e.meal)}</span>`:""}</span>
         <span style="display:flex;flex-direction:column;gap:6px;min-width:0">${lettersHTML(e)}${meta.length?`<span class="meta">${meta.join(" · ")}</span>`:""}</span>
         <span class="badge ${sc===MAX?"full":""}">${sc}/${MAX}</span></button>`}).join("")+(isToday&&list[list.length-1].ts<=Date.now()?`<div class="gap">seitdem ${fmtDur(Date.now()-list[list.length-1].ts)}</div>`:"")+`</div>`;
-    h+=`<p class="hint" style="margin:0">Eintrag antippen, um ihn zu ändern oder zu löschen.</p>${newBtn}`;
+    h+=`<p class="hint" style="margin:0">Eintrag antippen, um ihn zu ändern oder zu löschen.</p>`;
     body.innerHTML=h;
     body.querySelectorAll(".entry").forEach(b=>b.onclick=()=>{const e=entries.find(x=>x.id===b.dataset.id);if(e)editEntry(e)});
   }
-  $("d-new").onclick=()=>{resetForm();setView("add")};
+
 }
 function renderRate(){
   const k=dkey(dayRef), r=rating(k), el=$("d-rate");
@@ -938,7 +945,7 @@ function renderData(){
   if(last){const days=Math.floor((Date.now()-Number(last))/864e5);$("last").textContent=days===0?"heute":days===1?"gestern":`vor ${days} Tagen`}
 }
 $("plan-reset").onclick=()=>{ planStart=dkey(weekStart(new Date())); try{localStorage.setItem(KEY_PLAN,planStart)}catch(e){} toast("Plan startet diese Woche mit Woche 1"); renderTrack() };
-$("data-back").onclick=()=>setView("add");
+$("data-back").onclick=()=>setView("home");
 $("exp").onclick=async()=>{
   const json=JSON.stringify({app:"10/10 Tracker",version:2,exported:new Date().toISOString(),entries,days},null,1);
   const name=`10-10-sicherung-${dkey(new Date())}.json`;
@@ -972,40 +979,17 @@ $("imp-file").onchange=e=>{
 function renderFocus(){
   const wi=planWeek(), f=PLAN[wi], ws=weekStart(new Date());
   const wk=inRange(ws,addDays(ws,7)).filter(e=>val(e,f.k)).length, all=entries.filter(e=>val(e,f.k)).length, full=entries.filter(e=>scoreOf(e)===MAX).length;
-  $("focus-row").innerHTML=`<div class="row between" style="align-items:flex-start;flex-wrap:nowrap"><div style="min-width:0"><span class="label">Woche ${wi+1} von 4 · Fokus</span><div class="ftitle">${f.t}</div><div class="ftip">${f.tip}</div></div>
-    <div class="steps4" aria-label="Plan">${PLAN.map((p,i)=>`<span class="${i===wi?"on":i<wi?"done":""}"></span>`).join("")}</div></div>
-    <div class="counts"><span><b>${wk}×</b> diese Woche</span><span><b>${all}×</b> insgesamt</span><span><b>${full}×</b> ${MAX}/${MAX}</span></div>`;
+  $("focus-row").innerHTML=`<div class="row between" style="flex-wrap:nowrap;align-items:center"><span class="label">Woche ${wi+1} von 4 · Fokus</span><div class="steps4" aria-label="Plan">${PLAN.map((p,i)=>`<span class="${i===wi?"on":i<wi?"done":""}"></span>`).join("")}</div></div>
+    <div class="ftitle">${f.t}</div><div class="counts"><span><b>${wk}×</b> diese Woche</span><span><b>${all}×</b> insgesamt</span></div>`;
 }
 function renderTrack(){
-  const fd=firstDay(), today=startOfDay(new Date()), tk=dkey(today);
-  if(view==="akut"){$("track").hidden=true;$("actions").hidden=true;return}
-  $("actions").hidden=view!=="add";
-  if(!fd){$("track").hidden=false; $("dots").innerHTML=""; $("track-sum").textContent="Noch keine Einträge"; renderFocus(); $("gap-prompt").hidden=true; return}
-  $("track").hidden=false;
-  let html="", done=0, total=0;
-  for(let i=13;i>=0;i--){
-    const d=addDays(today,-i), k=dkey(d), before=k<fd;
-    if(before) continue;
-    const st=dayState(k), isT=k===tk;
-    if(st!=="open"){done++;total++} else if(!isT){total++}
-    const lab=`${fmtDay(d)}: ${st==="t"?"getrackt":st==="open"?(isT?"heute, noch offen":"offen"):"nachgetragen, "+rating(k)}`;
-    html+=`<button type="button" class="dot ${st==="open"?"":st} ${isT&&st==="open"?"now":""}" data-k="${k}" title="${lab}" aria-label="${lab}"></button>`;
-  }
-  $("dots").innerHTML=html;
-  let streak=0, d=today;
-  if(dayState(tk)==="open") d=addDays(today,-1);
-  while(dkey(d)>=fd && dayState(dkey(d))!=="open"){streak++; d=addDays(d,-1)}
-  $("track-sum").textContent=`${done} von ${total} Tagen erfasst`;
+  const fd=firstDay(), today=startOfDay(new Date());
+  $("track").hidden=true; $("actions").hidden=view!=="home";
   renderFocus();
-  $("dots").querySelectorAll(".dot[data-k]").forEach(b=>b.onclick=()=>{
-    const k=b.dataset.k;
-    if(hasMeals(k)||k===tk){ dayRef=startOfDay(new Date(k+"T12:00")); setView("day") } else openFill(k);
-  });
-  // Hinweis für gestern
   const yk=dkey(addDays(today,-1)); let skip=null; try{skip=localStorage.getItem(KEY_SKIP)}catch(e){}
-  const show=yk>=fd && dayState(yk)==="open" && skip!==yk;
-  $("gap-prompt").hidden=!show;
-  if(show){ $("gap-yes").onclick=()=>openFill(yk); $("gap-no").onclick=()=>{try{localStorage.setItem(KEY_SKIP,yk)}catch(e){} $("gap-prompt").hidden=true} }
+  const show=view==="home" && !!fd && yk>=fd && dayState(yk)==="open" && skip!==yk;
+  $("gap-sec").hidden=!show;
+  if(show){ $("gap-yes").onclick=()=>openFill(yk); $("gap-no").onclick=()=>{try{localStorage.setItem(KEY_SKIP,yk)}catch(e){} $("gap-sec").hidden=true} }
 }
 
 let fillKey=null, fill={rating:null,why:[],pms:false,note:""};
@@ -1032,12 +1016,12 @@ function makeChipsPlain(list,arr,cb){
 }
 $("fill-pms").onclick=()=>{fill.pms=!fill.pms;renderFill()};
 $("fill-note").addEventListener("input",e=>fill.note=e.target.value);
-$("fill-cancel").onclick=()=>setView("add");
+$("fill-cancel").onclick=()=>setView("home");
 $("fill-save").onclick=()=>{
   if(!fill.rating)return;
-  if(setDay(fillKey,{rating:fill.rating,why:fill.why,pms:fill.pms,note:fill.note.trim()})){toast("Tag eingeordnet");setView("add")}
+  if(setDay(fillKey,{rating:fill.rating,why:fill.why,pms:fill.pms,note:fill.note.trim()})){toast("Tag eingeordnet");setView("home")}
 };
-$("fill-del").onclick=()=>{ if(setDay(fillKey,{rating:null,why:[],note:""})){toast("Einordnung entfernt");setView("add")} };
+$("fill-del").onclick=()=>{ if(setDay(fillKey,{rating:null,why:[],note:""})){toast("Einordnung entfernt");setView("home")} };
 
 /* ---------- Akut-Hilfe ---------- */
 const AKUT=[
@@ -1097,6 +1081,7 @@ function renderBox(){
   $("ak-box").innerHTML=rest.map(t=>`<details class="boxitem"><summary><span>${t.t}</span><span class="hint">${t.d||""}</span></summary><div class="in"><p>${t.how}</p><p class="wy">${t.w}</p></div></details>`).join("");
 }
 $("akut-open").onclick=openAkut;
+$("ak-home").onclick=()=>{ setView("home"); window.scrollTo({top:0}) };
 const AKQ=[["hungrig","Hungrig"],["angespannt","Angespannt oder wütend"],["einsam","Einsam oder traurig"],["muede","Müde"]];
 let akQ=[];
 function akUnsure(){ akQ=[]; akShow("unsure"); $("ak-q-hunger").hidden=true; renderAkQ() }
@@ -1132,14 +1117,14 @@ function renderAkTools(){
   $("ak-tools").querySelectorAll("[data-help]").forEach(b=>b.onclick=()=>{const h=ls(KEY_HELP,{}),k=akArea.id+":"+b.dataset.help;h[k]=(h[k]||0)+1;lsSet(KEY_HELP,h);toast("Gemerkt");renderAkTools()});
 }
 $("ak-next").onclick=()=>{ akCur=(akCur+1)%akTools.length; renderAkTools(); const el=$("akt-"+akCur); if(el)el.scrollIntoView({behavior:"smooth",block:"center"}) };
-$("ak-done").onclick=()=>{ toast("Gut gemacht. Der Impuls ist vorbeigezogen."); setView("add") };
+$("ak-done").onclick=()=>{ toast("Gut gemacht. Der Impuls ist vorbeigezogen."); setView("home") };
 $("ak-eat").onclick=()=>{ resetForm(); if(akArea&&akArea.why){form.whyH=[akArea.why];form.touchedH=true} setView("add"); renderForm(); window.scrollTo({top:0}) };
 
 /* Regulieren */
 function regDone(kind){
   ovOpen(`<h2>Wie fühlst du dich jetzt?</h2><p style="max-width:30ch;margin:0" class="hint">Spür kurz nach: Bist du ruhig genug, um in Ruhe zu essen?</p>
     <div class="row" style="justify-content:center"><button type="button" class="btn" id="rg-yes">Ich bin ruhig</button><button type="button" class="btn ghost" id="rg-more">Noch nicht</button></div>`);
-  $("rg-yes").onclick=()=>{ ovClose(); if(view!=="add")setView("add"); form.c=true; if(!form.reg.includes(kind))form.reg.push(kind); renderForm(); toast("Ruhig und reguliert ist abgehakt.",2600) };
+  $("rg-yes").onclick=()=>{ ovClose(); form.c=true; if(!form.reg.includes(kind))form.reg.push(kind); renderForm(); toast("Schön. Ruhig und reguliert ist für die nächste Mahlzeit vorgemerkt.",3200) };
   $("rg-more").onclick=()=>{ ovClose(); openReg() };
 }
 function openReg(){
@@ -1301,7 +1286,7 @@ const EAT=(()=>{
     setTimeout(()=>{ stopAll(); try{wake&&wake.release()}catch(e){} wake=null },t);
     $e("eat").hidden=true;
     if(finished&&t0){ const d=new Date(t0); $("f-when").value=toInput(d); whenTouched=true;
-      form.scaleB=true; renderForm(); const bb=$("ck-b"); if(bb) bb.scrollIntoView({behavior:"smooth",block:"center"});
+      form.scaleB=true; setView("add"); const bb=$("ck-b"); if(bb) bb.scrollIntoView({behavior:"smooth",block:"center"});
       toast("Wie satt bist du jetzt? Trag die Hungerstufe danach ein.",3500) }
     t0=0;
   }
@@ -1317,13 +1302,13 @@ const EAT=(()=>{
 
 /* ---------- Ansichten ---------- */
 function setView(v){
-  if(v==="day"||v==="week") v="review";
-  view=v;
-  document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.view===v));
+  if(v==="day"||v==="week"||v==="review") v="home";
+  view=v; const home=v==="home";
   ["add","data","fill","akut"].forEach(x=>$("v-"+x).hidden=x!==v);
-  $("v-day").hidden=$("v-cal").hidden=(v!=="review"); $("v-week").hidden=true;
-  $("track").hidden=(v==="akut"); $("actions").hidden=(v!=="add"); if(v!=="akut") renderTrack();
-  if(v==="review"){calRef=new Date(dayRef.getFullYear(),dayRef.getMonth(),1);renderDay();renderCal()} if(v==="data")renderData();
+  $("v-day").hidden=$("v-cal").hidden=!home; $("v-week").hidden=true;
+  renderTrack();
+  if(home){calRef=new Date(dayRef.getFullYear(),dayRef.getMonth(),1);renderDay();renderCal()}
+  if(v==="data")renderData(); if(v==="add")renderForm();
 }
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{if(b.dataset.view==="add"&&editingId)resetForm();setView(b.dataset.view)});
 
@@ -1340,7 +1325,7 @@ function praise(e){
 $("hs").innerHTML=HS.filter(r=>r[0]<=7).map(r=>`<li class="${r[0]===2||r[0]===5?"ideal":""}"><span class="lv">${r[0]===7?"7–10":r[0]}</span><div><b>${r[0]===7?"Übervoll bis vollgestopft":r[1]}</b><p>${r[0]===7?"Mehr gegessen als der Körper braucht. Blähungen, Trägheit, eventuell Reue.":r[2]}</p></div></li>`).join("");
 
 resetForm();
-renderTrack();
+setView("home");
 (()=>{ const sp=$("splash"); document.body.classList.add("splashing");
   const go=()=>{ if(sp.classList.contains("out"))return; document.body.classList.remove("splashing"); requestAnimationFrame(()=>{ sp.classList.add("out"); setTimeout(()=>sp.remove(),500) }) };
   sp.addEventListener("click",go); sp.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" ")go() }); })();
