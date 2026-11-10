@@ -615,7 +615,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=33;
+const APP_VERSION=34;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -715,8 +715,8 @@ function renderForm(){
       }
     }
   });
-  const nb=document.createElement("button"); nb.type="button"; nb.className="ck extra"; nb.setAttribute("aria-pressed",form.n);
-  nb.innerHTML=`<span class="t ci"><span class="cico nour">${ICON.n}</span><b>Genährt <span class="ftag muted">Extra</span></b></span><span class="state">${form.n?"✓":""}</span>`;
+  const nb=document.createElement("button"); nb.type="button"; nb.className="ck"; nb.setAttribute("aria-pressed",form.n);
+  nb.innerHTML=`<span class="t ci"><span class="cico">${ICON.n}</span><b>Genährt <span class="ftag muted">Extra</span></b></span><span class="state">${form.n?"✓":""}</span>`;
   nb.onclick=()=>{form.n=!form.n;renderForm()}; crit.appendChild(nb);
   const mel=$("meal"); mel.innerHTML="";
   const SHORT={"Mittagessen":"Mittag","Abendessen":"Abend"};
@@ -794,7 +794,7 @@ $("del-yes").onclick=()=>{ entries=entries.filter(e=>e.id!==editingId); if(persi
 
 /* ---------- Tag ---------- */
 function inRange(a,b){return entries.filter(e=>e.ts>=a.getTime()&&e.ts<b.getTime()).sort((x,y)=>x.ts-y.ts)}
-function lettersHTML(e){return `<span class="letters">${CRIT.map(c=>ico(c.k,val(e,c.k))).join("")}${e.n?`<span class="lt nour" title="Genährt">${ICON.n}</span>`:""}</span>`}
+function lettersHTML(e){return `<span class="letters">${CRIT.map(c=>ico(c.k,val(e,c.k))).join("")}${e.n?`<span class="lt on" title="Genährt">${ICON.n}</span>`:""}</span>`}
 function missedList(list){return CRIT.map(c=>({c,miss:list.filter(e=>!val(e,c.k)).length})).filter(x=>x.miss>0).sort((a,b)=>b.miss-a.miss)}
 function renderDay(){
   const isToday=dkey(dayRef)===dkey(new Date());
