@@ -297,7 +297,7 @@ details{border-top:0}
 .label,.hint,small,.act small,.counts,.counts b,.ftip,.lt,.ftag,.badge,.day,.gap,.meta,.wy,.sub,.foot button,.mini{font-size:var(--fs-s)!important}
 .score .big{font-weight:600}
 /* Neue Mahlzeit als getöntes Liquid Glass wie der Fokus oben */
-#v-add.panel{background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,.10)),rgba(25,45,35,.24)!important;
+#v-add.panel,#v-day.panel,#v-cal.panel{background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,.10)),rgba(25,45,35,.24)!important;
   -webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);border:1px solid rgba(255,255,255,.45)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 1px rgba(255,255,255,.15),0 8px 24px rgba(0,0,0,.18)!important;color:#fff}
 #v-add h2,#v-add .score,#v-add .score .big,#v-add>.row .hint,#v-add .scale>.hint,#v-add .scale .hint,#v-add .label,#v-add summary,#v-add .hs,#v-add .hs p,#v-add details>.hint{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.25)}
@@ -309,6 +309,24 @@ details{border-top:0}
 #v-add .ck.focus{box-shadow:inset 0 0 0 2px #fff,0 0 0 1px rgba(61,106,85,.35)}
 #v-add .chip.n.ideal{border-color:var(--accent)}
 #v-add .score.full .big{color:#fff}
+/* Rückblick im gleichen Stil */
+:is(#v-day,#v-cal){color:#fff}
+:is(#v-day,#v-cal) :is(.nav h2,.hint,.label,.gap,.empty,.empty b,.cal-head span,.cal-key){color:#fff!important;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+:is(#v-day,#v-cal) :is(.stat,.entry,.nav button,.chip:not([aria-pressed="true"])){background:rgba(226,232,228,.46)!important;color:#1E2723!important;border:1px solid rgba(255,255,255,.35)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)!important;text-shadow:none}
+:is(#v-day,#v-cal) :is(.stat,.entry) :is(.hint,.label,.meta){color:#3F4B45!important;text-shadow:none}
+:is(#v-day,#v-cal) .nav button[disabled]{opacity:.45}
+#v-day .btn.ghost{color:#fff;border-color:rgba(255,255,255,.55)}
+#v-day .callout{background:rgba(226,232,228,.55)!important;color:#1E2723}
+#v-cal .cd{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+#v-cal .cd.t{background:var(--accent);color:#fff}
+#v-cal .cd.open{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7);color:#fff}
+#v-cal .cd.r-gut{background:transparent;box-shadow:inset 0 0 0 2px #A9DDBF;color:#fff}
+#v-cal .cd.r-gemischt{background:#E6C36F;color:#2a2210;text-shadow:none}
+#v-cal .cd.r-schwer{background:#E3907F;color:#2a1410;text-shadow:none}
+#v-cal .cd.full{box-shadow:0 0 0 2.5px #F0CD72}
+#v-cal .cd.sel{outline:2px solid #fff}
+#v-cal .cd.future{opacity:.5}
+#v-cal .k.t{background:var(--accent)} #v-cal .k.r-gut{background:transparent;border:2px solid #A9DDBF} #v-cal .k.r-gemischt{background:#E6C36F;border:0} #v-cal .k.r-schwer{background:#E3907F;border:0} #v-cal .k.open{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.8)} #v-cal .k.full{box-shadow:0 0 0 2px #F0CD72}
 /* Kalender */
 .cal-head,.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;text-align:center}
 .cal-head span{font-size:var(--fs-s);color:var(--muted);font-weight:600}
@@ -582,7 +600,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=31;
+const APP_VERSION=32;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
