@@ -309,6 +309,8 @@ details{border-top:0}
 #v-add .ck.focus{box-shadow:inset 0 0 0 2px #fff,0 0 0 1px rgba(61,106,85,.35)}
 #v-add .chip.n.ideal{border-color:var(--accent)}
 #v-add .score.full .big{color:#fff}
+.backfill{align-self:flex-start}
+#v-day .btn.ghost.backfill{color:#fff;border-color:rgba(255,255,255,.55);background:transparent}
 .back{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.22);color:#fff;font-size:1.3rem;line-height:1;display:grid;place-items:center;padding:0 0 2px}
 #v-akut .back{color:var(--ink);background:var(--fill);border-color:var(--line)}
 .focus-line{display:flex;flex-direction:column;gap:2px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.3)}
@@ -620,7 +622,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=35;
+const APP_VERSION=36;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -679,8 +681,9 @@ const focus=()=>PLAN[planWeek()];
 
 /* ---------- Formular ---------- */
 function renderForm(){
-  $("form-title").textContent=editingId?"Eintrag bearbeiten":"Neue Mahlzeit";
-  renderSince();
+  const past=!editingId&&whenTouched&&formDateKey()<dkey(new Date());
+  $("form-title").textContent=editingId?"Eintrag bearbeiten":past?"Mahlzeit nachtragen":"Neue Mahlzeit";
+  renderSince(); if(past) $("since").textContent=fmtDay(new Date($("f-when").value));
   $("cancel").hidden=!editingId; $("del").hidden=!editingId;
   const crit=$("crit"); crit.innerHTML="";
   const fk=focus().k;
@@ -809,12 +812,13 @@ function renderDay(){
   $("d-next").disabled=isToday;
   $("d-pms").hidden=!isPms(dkey(dayRef));
   renderRate();
+  setTimeout(()=>{ const b=$("d-backfill"); if(b) b.onclick=backfill },0);
   const list=inRange(dayRef,addDays(dayRef,1)), body=$("d-body");
   const newBtn=`<button type="button" class="btn" id="d-new">Neue Mahlzeit eintragen</button>`;
   if(!list.length){
     const k=dkey(dayRef), r=rating(k), d=days[k]||{};
     const extra=(d.why&&d.why.length)||d.note?`<p class="hint" style="margin:0">${d.why&&d.why.length?esc(d.why.join(", ")):""}${d.note?(d.why&&d.why.length?" · ":"")+esc(d.note):""}</p>`:"";
-    body.innerHTML=`<div class="empty"><b>${isToday?"Noch keine Mahlzeit":"Keine Mahlzeiten eingetragen"}</b></div>${extra}`;
+    body.innerHTML=`<div class="empty"><b>${isToday?"Noch keine Mahlzeit":"Keine Mahlzeiten eingetragen"}</b></div>${extra}${isToday?"":`<button type="button" class="btn backfill" id="d-backfill">Mahlzeit nachtragen</button>`}`;
   }
   else{
     let h=`<div class="crit">`+list.map((e,i)=>{
@@ -830,11 +834,16 @@ function renderDay(){
       return `${gap}<button type="button" class="entry" data-id="${esc(e.id)}"><span class="time">${esc(e.time||"")}${e.meal?`<br><span class="meta" style="font-weight:400">${esc(e.meal)}</span>`:""}</span>
         <span style="display:flex;flex-direction:column;gap:6px;min-width:0">${lettersHTML(e)}${meta.length?`<span class="meta">${meta.join(" · ")}</span>`:""}</span>
         <span class="badge ${sc===MAX?"full":""}">${sc}/${MAX}</span></button>`}).join("")+(isToday&&list[list.length-1].ts<=Date.now()?`<div class="gap">seitdem ${fmtDur(Date.now()-list[list.length-1].ts)}</div>`:"")+`</div>`;
-    h+=`<p class="hint" style="margin:0">Eintrag antippen, um ihn zu ändern oder zu löschen.</p>`;
+    h+=`<p class="hint" style="margin:0">Eintrag antippen, um ihn zu ändern oder zu löschen.</p>${isToday?"":`<button type="button" class="btn ghost backfill" id="d-backfill">Weitere Mahlzeit nachtragen</button>`}`;
     body.innerHTML=h;
     body.querySelectorAll(".entry").forEach(b=>b.onclick=()=>{const e=entries.find(x=>x.id===b.dataset.id);if(e)editEntry(e)});
   }
 
+}
+function backfill(){
+  const d=new Date(dayRef); const now=new Date(); d.setHours(now.getHours(),now.getMinutes(),0,0);
+  resetForm(); $("f-when").value=toInput(d); whenTouched=true; setView("add"); $("form-title").textContent="Mahlzeit nachtragen";
+  $("since").textContent=fmtDay(d); window.scrollTo({top:0});
 }
 function renderRate(){
   const k=dkey(dayRef), r=rating(k), el=$("d-rate");
