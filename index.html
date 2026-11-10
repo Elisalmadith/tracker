@@ -57,7 +57,7 @@ header h1 em{color:#E7F0E2}
 #splash p{margin:8px 0 0;color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.6);letter-spacing:.06em}
 #splash .tap{font-size:.9rem;font-weight:700;color:#fff;background:rgba(0,0,0,.28);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-radius:999px;padding:10px 18px}
 @media (prefers-reduced-motion:reduce){ #splash{transition:none} }
-.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
 .tabs button{border:0;background:transparent;border-radius:999px;padding:10px 2px;font-weight:700;font-size:.92rem;color:var(--muted)}
 .tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
 
@@ -202,6 +202,37 @@ ul.plain{margin:0;padding-left:18px}
 @media (max-width:420px){ .scale{padding-left:0} .stat .v{font-size:1.6rem} }
 @media (prefers-reduced-motion:no-preference){ .ck,.chip,.tabs button{transition:background .15s,border-color .15s,color .15s} }
 /* ---- iOS schlicht ---- */
+.glass{border-radius:22px;padding:16px;color:#fff;background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,.10)),rgba(25,45,35,.24);
+  -webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);border:1px solid rgba(255,255,255,.45);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 1px rgba(255,255,255,.15),0 8px 24px rgba(0,0,0,.18);text-shadow:0 1px 2px rgba(0,0,0,.25)}
+.glass .label,.glass .hint,.glass .legend{color:rgba(255,255,255,.88)}
+.glass .btn.ghost{color:#fff;border-color:rgba(255,255,255,.5)}
+.dots{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:5px}
+.glass .dot{border-color:rgba(255,255,255,.7)}
+.glass .dot.t{background:#fff;border-color:#fff}
+.glass .dot.now{border:1.5px solid #fff}
+.focus-row{display:flex;flex-direction:column;gap:10px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.3)}
+.ftitle{font-size:1.25rem;font-weight:600;letter-spacing:-.01em;margin-top:2px}
+.ftip{font-size:.88rem;opacity:.9;margin-top:2px}
+.steps4{display:flex;gap:4px;flex:none;margin-top:4px}
+.steps4 span{width:16px;height:6px;border-radius:3px;background:rgba(255,255,255,.35)}
+.steps4 span.done{background:rgba(255,255,255,.65)} .steps4 span.on{background:#fff;width:24px}
+.counts{display:flex;gap:16px;flex-wrap:wrap;font-size:.86rem}
+.counts b{font-size:1.05rem;font-variant-numeric:tabular-nums}
+.actions{display:flex;flex-direction:column;gap:10px}
+.act{display:flex;flex-direction:column;align-items:center;gap:1px;width:100%;border-radius:18px;padding:14px;font-weight:600;font-size:1.05rem}
+.act small{font-weight:400;font-size:.8rem;opacity:.85}
+.act.solid{background:var(--accent);color:var(--accent-ink);border:0;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.ck{grid-template-columns:1fr auto!important}
+.ck.focus{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.ftag{display:inline-block;font-size:.68rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 7px;vertical-align:2px;margin-left:4px}
+.ck.extra{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
+.foot{display:flex;justify-content:center;padding:18px 0 8px}
+.foot button{border:0;background:transparent;color:#fff;opacity:.8;font-size:.85rem;text-decoration:underline;text-underline-offset:3px;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+.reg-opt{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;border:0;border-radius:14px;padding:14px;background:var(--fill);color:var(--ink)}
+.reg-opt b{display:block;font-size:1.02rem} .reg-opt small{color:var(--muted)}
+.reg-opt .chip{background:var(--surface)}
+.dur{display:flex;gap:6px}
 .ck .state{font-size:1.1rem;color:var(--accent);min-width:1em;text-align:right}
 .eat-btn{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;border:0;border-radius:14px;padding:14px;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:1.02rem;margin:4px 0}
 .eat-btn small{font-weight:400;opacity:.85;font-size:.82rem}
@@ -272,26 +303,31 @@ details{border-top:0}
     <button role="tab" aria-selected="true" data-view="add">Eintragen</button>
     <button role="tab" aria-selected="false" data-view="day">Tag</button>
     <button role="tab" aria-selected="false" data-view="week">Woche</button>
-    <button role="tab" aria-selected="false" data-view="data">Daten</button>
   </div>
 
   <div class="banner" id="banner" hidden></div>
 
-  <section class="panel track14" id="track" hidden>
+  <section class="track14 glass" id="track" hidden>
+    <div class="focus-row" id="focus-row"></div>
     <div class="row between"><span class="label">Letzte 14 Tage</span><span class="hint num" id="track-sum"></span></div>
     <div class="dots" id="dots"></div>
     <div class="legend">
-      <span><i style="background:var(--accent)"></i>getrackt</span>
+      <span><i style="background:#fff"></i>getrackt</span>
       <span><i style="background:var(--accent-soft);border:1px solid var(--accent)"></i>gut</span>
       <span><i style="background:var(--gold-soft);border:1px solid var(--gold)"></i>gemischt</span>
       <span><i style="background:var(--danger-soft);border:1px solid var(--danger)"></i>schwer</span>
-      <span><i style="border:1px dashed var(--muted)"></i>offen</span>
+      <span><i style="border:1px dashed rgba(255,255,255,.9)"></i>offen</span>
     </div>
     <div class="prompt" id="gap-prompt" hidden>
       <p style="margin:0" id="gap-text">Gestern fehlt noch. Magst du kurz einordnen, wie er war?</p>
       <div class="row"><button type="button" class="btn" id="gap-yes">Einordnen</button><button type="button" class="btn ghost" id="gap-no">Überspringen</button></div>
     </div>
   </section>
+
+  <div class="actions" id="actions">
+    <button type="button" class="act glass" id="reg-open"><span>Regulieren</span><small>Atmen, ankommen, Werkzeuge</small></button>
+    <button type="button" class="act solid" id="eat-start"><span>Essen beginnen</span><small>mit Klang und Pause</small></button>
+  </div>
 
   <section id="v-akut" class="panel" hidden>
     <div id="ak-start">
@@ -358,7 +394,7 @@ details{border-top:0}
   <section id="v-add" class="panel">
     <div class="row between">
       <div><h2 id="form-title">Neue Mahlzeit</h2><div class="hint num" id="since"></div></div>
-      <div class="score num" id="score"><span class="big">0</span><span>/ 7</span></div>
+      <div class="score num" id="score"><span class="big">0</span><span>/ 5</span></div>
     </div>
     <div class="when-row"><input type="datetime-local" id="f-when" aria-label="Wann"><button type="button" class="chip" id="f-pms" aria-pressed="false">PMS</button></div>
     <div class="seg" id="meal" role="group" aria-label="Mahlzeit"></div>
@@ -424,9 +460,15 @@ details{border-top:0}
       <input type="file" id="imp-file" accept="application/json,.json" hidden>
     </div>
     <p class="hint" style="margin:0">Beim Laden werden Einträge ergänzt, vorhandene bleiben erhalten.</p>
+    <div style="border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:8px">
+      <div class="label">Wochenplan</div>
+      <p class="hint" style="margin:0">Ruhig essen · Echter Hunger · Ohne Ablenkung · Bei 5 aufhören, dann wieder von vorn.</p>
+      <div class="row"><button class="btn ghost" id="plan-reset">Plan ab dieser Woche neu starten</button><button class="btn ghost" id="data-back">Zurück</button></div>
+    </div>
     <p class="hint num" style="margin:0" id="ver"></p>
   </section>
 </div>
+<div class="foot"><button type="button" id="data-link">Daten &amp; Sicherung</button></div>
 <div class="toast" id="toast" hidden></div>
 <div class="ov" id="ov" hidden role="dialog" aria-modal="true"></div>
 <div id="eat" hidden role="dialog" aria-modal="true" aria-label="Essmodus">
@@ -444,15 +486,21 @@ details{border-top:0}
 
 <script>
 const CRIT=[
-  {k:"c",L:"C",name:"Calm",de:"Ruhig und reguliert",hint:"Vor dem Essen in Ruhe gekommen"},
-  {k:"h",L:"H",name:"Hungry",de:"Echter Hunger",hint:"Stufe 2 vor dem Essen"},
-  {k:"p",L:"P",name:"Plated",de:"Auf einem Teller",hint:"Angerichtet, nicht aus der Packung"},
-  {k:"s",L:"S",name:"Seated",de:"Im Sitzen",hint:"Nicht im Stehen, nicht im Auto"},
-  {k:"f",L:"Pr",name:"Present",de:"Ohne Ablenkung",hint:"Kein Handy, TV oder Hörbuch. Musik ist okay"},
-  {k:"b",L:"B",name:"Balanced",de:"Stopp bei Stufe 5",hint:"Neutral, nicht voll"},
-  {k:"n",L:"N",name:"Nourished",de:"Genährt",hint:"Lecker und freudig"}
+  {k:"c",L:"R",de:"Ruhig und reguliert",hint:"Vor dem Essen in Ruhe angekommen"},
+  {k:"h",L:"H",de:"Echter Hunger",hint:"Stufe 2 vor dem Essen"},
+  {k:"t",L:"T",de:"Am Tisch sitzend mit Teller",hint:"Nicht im Stehen, nicht aus der Packung"},
+  {k:"f",L:"P",de:"Präsent und frei von Ablenkung",hint:"Kein Handy, TV oder Hörbuch. Musik ist okay"},
+  {k:"b",L:"A",de:"Ausgeglichen",hint:"Aufhören bei Stufe 5, nicht voll"}
 ];
+CRIT.forEach(c=>c.name=c.de);
 const MAX=CRIT.length;
+const val=(e,k)=>k==="t"?(e.t!==undefined?!!e.t:!!(e.p&&e.s)):!!e[k];
+/* Wochenplan: 4 Wochen im Wechsel */
+const PLAN=[{k:"c",t:"Ruhig essen",tip:"Vor jeder Mahlzeit erst regulieren, dann essen."},
+            {k:"h",t:"Immer bei echtem Hunger",tip:"Erst essen, wenn du ein klares Signal bei Stufe 2 spürst."},
+            {k:"f",t:"Ohne Ablenkung",tip:"Kein Handy, kein TV, kein Hörbuch. Musik ist okay."},
+            {k:"b",t:"Bei 5 aufhören",tip:"Besteck ablegen, nachspüren, bei Balance aufhören."}];
+const KEY_PLAN="tenten.plan.v1";
 const MEALS=["Frühstück","Mittagessen","Abendessen","Snack"];
 const REG=["Atmen","Meditation","Akupressurmatte","Spaziergang","Lesen","5-4-3-2-1 / Erden","Hand auf Herz/Bauch","Schütteln","Anderes"];
 const SHARED=["Energie gesucht","Runterkommen","Stress / Druck","Belastung betäuben","Halt gesucht","Heißhunger"];
@@ -474,7 +522,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=23;
+const APP_VERSION=24;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -488,7 +536,7 @@ const fmtDay=d=>d.toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month
 const fmtShort=d=>d.toLocaleDateString("de-DE",{day:"numeric",month:"short"});
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmtDur=ms=>{const m=Math.max(0,Math.round(ms/60000)),h=Math.floor(m/60),r=m%60;return h?(r?`${h} h ${r} min`:`${h} h`):`${r} min`};
-const scoreOf=e=>CRIT.reduce((a,c)=>a+(e[c.k]?1:0),0);
+const scoreOf=e=>CRIT.reduce((a,c)=>a+(val(e,c.k)?1:0),0);
 const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 
 /* ---------- Speicher (nur auf diesem Gerät) ---------- */
@@ -524,8 +572,12 @@ if(navigator.storage&&navigator.storage.persist){ navigator.storage.persist().ca
 
 let view="add", dayRef=startOfDay(new Date()), weekRef=weekStart(new Date());
 let form=blank(), editingId=null;
-function blank(){return{c:false,h:false,p:false,s:false,f:false,b:false,n:false,before:null,after:null,meal:null,reg:[],whyH:[],whyB:[],feelings:[],touchedH:false,touchedB:false,legacy:[],note:""}}
+function blank(){return{c:false,h:false,t:false,f:false,b:false,n:false,scaleH:false,scaleB:false,before:null,after:null,meal:null,reg:[],whyH:[],whyB:[],feelings:[],touchedH:false,touchedB:false,legacy:[],note:""}}
 $("today-line").textContent=fmtDay(new Date());
+let planStart=null; try{ planStart=localStorage.getItem(KEY_PLAN) }catch(e){}
+if(!planStart){ planStart=dkey(weekStart(new Date())); try{localStorage.setItem(KEY_PLAN,planStart)}catch(e){} }
+function planWeek(d){ const ws=weekStart(d||new Date()), st=new Date(planStart+"T00:00"); const n=Math.round((ws-st)/(7*864e5)); return ((n%4)+4)%4 }
+const focus=()=>PLAN[planWeek()];
 
 /* ---------- Formular ---------- */
 function renderForm(){
@@ -533,15 +585,15 @@ function renderForm(){
   renderSince();
   $("cancel").hidden=!editingId; $("del").hidden=!editingId;
   const crit=$("crit"); crit.innerHTML="";
+  const fk=focus().k;
   CRIT.forEach(c=>{
-    const b=document.createElement("button");
-    b.type="button"; b.className="ck"; b.setAttribute("aria-pressed",form[c.k]);
-    b.innerHTML=`<span class="mark">${c.L}</span><span class="t"><b>${c.name} · ${c.de}</b><small>${c.hint}</small></span><span class="state" aria-label="${form[c.k]?"erfüllt":"offen"}">${form[c.k]?"✓":""}</span>`;
-    b.onclick=()=>{form[c.k]=!form[c.k]; if(c.k==="h")form.touchedH=true; if(c.k==="b")form.touchedB=true; renderForm()};
+    const b=document.createElement("button"), scaleKey=c.k==="h"?"scaleH":"scaleB";
+    b.type="button"; b.className="ck"+(c.k===fk?" focus":""); b.id="ck-"+c.k; b.setAttribute("aria-pressed",form[c.k]);
+    b.innerHTML=`<span class="t"><b>${c.de}${c.k===fk?` <span class="ftag">Fokus</span>`:""}</b><small>${c.hint}</small></span><span class="state" aria-label="${form[c.k]?"erfüllt":"offen"}">${form[c.k]?"✓":(c.k==="h"||c.k==="b")?"›":""}</span>`;
+    b.onclick=()=>{ if(c.k==="h"||c.k==="b"){ form[scaleKey]=!form[scaleKey]; if(c.k==="h")form.touchedH=true; else form.touchedB=true }
+      else form[c.k]=!form[c.k]; renderForm() };
     crit.appendChild(b);
-    if(c.k==="f"&&!editingId){ const go=document.createElement("button"); go.type="button"; go.className="eat-btn"; go.id="eat-start";
-      go.innerHTML=`<span>Essen beginnen</span><small>mit Klang und Pause</small>`; go.onclick=()=>EAT.open(); crit.appendChild(go); }
-    if(c.k==="h"||c.k==="b"){
+    if((c.k==="h"||c.k==="b")&&(form[scaleKey]||form[c.k==="h"?"before":"after"]!=null)){
       const field=c.k==="h"?"before":"after", ideal=c.k==="h"?2:5;
       const w=document.createElement("div"); w.className="scale";
       w.innerHTML=`<span class="hint">${c.k==="h"?"Hungerstufe vorher":"Hungerstufe danach"}</span>`;
@@ -551,13 +603,13 @@ function renderForm(){
         x.className="chip n"+(i===ideal?" ideal":""); x.textContent=i;
         x.setAttribute("aria-pressed",form[field]===i);
         x.setAttribute("aria-label",`Stufe ${i}: ${HS[i][1]}`);
-        x.onclick=()=>{ if(form[field]===i){form[field]=null}else{form[field]=i; form[c.k]=(i===ideal)} renderForm() };
+        x.onclick=()=>{ if(form[field]===i){form[field]=null; form[c.k]=false}else{form[field]=i; form[c.k]=(i===ideal)} renderForm() };
         ch.appendChild(x);
       }
       w.appendChild(ch);
       if(form[field]!=null){const d=document.createElement("span");d.className="hint";d.textContent=`${form[field]} · ${HS[form[field]][1]}: ${HS[form[field]][2]}`;w.appendChild(d)}
       crit.appendChild(w);
-      const isH=c.k==="h", show=!form[c.k]&&(isH?(form.touchedH||form.before!=null):(form.touchedB||form.after!=null));
+      const isH=c.k==="h", show=!form[c.k]&&(isH?form.before!=null:form.after!=null);
       if(show){
         const y=document.createElement("div"); y.className="why";
         const arr=isH?form.whyH:form.whyB, key=isH?"openH":"openB", open=form[key]||arr.length>0;
@@ -570,6 +622,9 @@ function renderForm(){
       }
     }
   });
+  const nb=document.createElement("button"); nb.type="button"; nb.className="ck extra"; nb.setAttribute("aria-pressed",form.n);
+  nb.innerHTML=`<span class="t"><b>Genährt</b><small>Lecker und freudig. Zählt extra, nicht zum Ergebnis.</small></span><span class="state">${form.n?"✓":""}</span>`;
+  nb.onclick=()=>{form.n=!form.n;renderForm()}; crit.appendChild(nb);
   const mel=$("meal"); mel.innerHTML="";
   const SHORT={"Mittagessen":"Mittag","Abendessen":"Abend"};
   MEALS.forEach(t=>{const x=document.createElement("button");x.type="button";x.textContent=SHORT[t]||t;
@@ -619,7 +674,7 @@ $("f-note").addEventListener("input",e=>form.note=e.target.value);
 function resetForm(){form=blank();editingId=null;whenTouched=false;$("f-when").value=toInput(new Date());$("f-note").value="";$("del-confirm").hidden=true;renderForm()}
 function editEntry(e){
   editingId=e.id;
-  form=blank(); CRIT.forEach(c=>form[c.k]=!!e[c.k]);
+  form=blank(); CRIT.forEach(c=>form[c.k]=val(e,c.k)); form.n=!!e.n;
   form.before=e.before??null; form.meal=e.meal??null; form.after=e.after??null; form.reg=[...(e.reg||[])]; form.whyH=[...(e.whyH||[])]; form.whyB=[...(e.whyB||[])]; form.feelings=[...(e.feelings||[])]; form.legacy=[...(e.triggers||[])];
   form.touchedH=form.whyH.length>0||!e.h; form.touchedB=form.whyB.length>0||!e.b; form.note=e.note||"";
   $("f-when").value=toInput(new Date(e.ts)); $("f-note").value=form.note; $("del-confirm").hidden=true;
@@ -632,7 +687,7 @@ $("save").onclick=()=>{
   const body={id:editingId||newId(),ts:when.getTime(),date:dkey(when),time:`${pad(when.getHours())}:${pad(when.getMinutes())}`,
     before:form.before,after:form.after,meal:form.meal,reg:form.reg,whyH:form.h?[]:form.whyH,whyB:form.b?[]:form.whyB,
     feelings:activeWhy().some(t=>FEEL_TRIGGERS.includes(t))?form.feelings:[],triggers:form.legacy,note:form.note.trim(),updated:Date.now()};
-  CRIT.forEach(c=>body[c.k]=form[c.k]);
+  CRIT.forEach(c=>body[c.k]=form[c.k]); body.n=form.n; body.p=body.s=form.t;
   const i=entries.findIndex(e=>e.id===body.id);
   if(i>=0)entries[i]=body; else entries.push(body);
   if(persist()){ renderTrack(); toast(praise(body),3600); dayRef=startOfDay(when); resetForm(); }
@@ -644,8 +699,8 @@ $("del-yes").onclick=()=>{ entries=entries.filter(e=>e.id!==editingId); if(persi
 
 /* ---------- Tag ---------- */
 function inRange(a,b){return entries.filter(e=>e.ts>=a.getTime()&&e.ts<b.getTime()).sort((x,y)=>x.ts-y.ts)}
-function lettersHTML(e){return `<span class="letters">${CRIT.map(c=>`<span class="lt ${e[c.k]?"on":"off"}" title="${c.name}">${c.L}</span>`).join("")}</span>`}
-function missedList(list){return CRIT.map(c=>({c,miss:list.filter(e=>!e[c.k]).length})).filter(x=>x.miss>0).sort((a,b)=>b.miss-a.miss)}
+function lettersHTML(e){return `<span class="letters">${CRIT.map(c=>`<span class="lt ${val(e,c.k)?"on":"off"}" title="${c.de}">${c.L}</span>`).join("")}${e.n?`<span class="hint" style="margin-left:4px">genährt</span>`:""}</span>`}
+function missedList(list){return CRIT.map(c=>({c,miss:list.filter(e=>!val(e,c.k)).length})).filter(x=>x.miss>0).sort((a,b)=>b.miss-a.miss)}
 function renderDay(){
   const isToday=dkey(dayRef)===dkey(new Date());
   $("d-title").textContent=isToday?"Heute":fmtDay(dayRef);
@@ -690,7 +745,7 @@ $("d-next").onclick=()=>{dayRef=addDays(dayRef,1);renderDay()};
 /* ---------- Woche ---------- */
 function weekStats(ws){
   const list=inRange(ws,addDays(ws,7)), n=list.length, full=list.filter(e=>scoreOf(e)===MAX).length;
-  const per=CRIT.map(c=>({c,hit:list.filter(e=>e[c.k]).length}));
+  const per=CRIT.map(c=>({c,hit:list.filter(e=>val(e,c.k)).length}));
   const cnt=key=>{const o={};list.forEach(e=>(e[key]||[]).forEach(t=>o[t]=(o[t]||0)+1));return Object.entries(o).sort((a,b)=>b[1]-a[1])};
   return{list,n,full,per,whyH:cnt("whyH"),whyB:cnt("whyB"),feel:cnt("feelings"),trig:cnt("triggers"),
     missH:list.filter(e=>!e.h).length,missB:list.filter(e=>!e.b).length};
@@ -734,9 +789,9 @@ function renderWeek(){
     const w=Math.round(p.hit/s.n*100), weak=weakest.includes(p);
     return `<div class="bar ${weak?"weak":""}"><span class="lt ${weak?"off":"on"}">${p.c.L}</span><div class="track"><div class="fill" style="width:${w}%"></div></div><span class="val">${p.hit}/${s.n} · ${w} %</span></div>`}).join("")+`</div></div>`;
   if(weakest.length){
-    const names=weakest.map(p=>`<b>${p.c.L} · ${p.c.name}</b> (${p.c.de.toLowerCase()})`).join(" und ");
+    const names=weakest.map(p=>`<b>${p.c.de}</b>`).join(" und ");
     h+=`<div class="callout"><p>Am schwersten fiel dir diese Woche ${names}. ${weakest.length>1?"Sie fehlten":"Es fehlte"} bei ${s.n-minHit} von ${s.n} Mahlzeiten.</p></div>`;
-  }else h+=`<div class="callout good"><p>Alle sieben Kriterien bei jeder Mahlzeit erfüllt.</p></div>`;
+  }else h+=`<div class="callout good"><p>Alle fünf Punkte bei jeder Mahlzeit erfüllt.</p></div>`;
   const top=arr=>arr.slice(0,3).map(([t,c])=>`${esc(t)} (${c}×)`).join(", ");
   const lines=[];
   if(s.missH) lines.push(`<li><b>H fehlte ${s.missH}×</b>${s.whyH.length?`, meist ${top(s.whyH)}`:""}.</li>`);
@@ -768,6 +823,8 @@ function renderData(){
   let last=null; try{last=localStorage.getItem(KEY_BK)}catch(e){}
   if(last){const days=Math.floor((Date.now()-Number(last))/864e5);$("last").textContent=days===0?"heute":days===1?"gestern":`vor ${days} Tagen`}
 }
+$("plan-reset").onclick=()=>{ planStart=dkey(weekStart(new Date())); try{localStorage.setItem(KEY_PLAN,planStart)}catch(e){} toast("Plan startet diese Woche mit Woche 1"); renderTrack() };
+$("data-back").onclick=()=>setView("add");
 $("exp").onclick=async()=>{
   const json=JSON.stringify({app:"10/10 Tracker",version:2,exported:new Date().toISOString(),entries,days},null,1);
   const name=`10-10-sicherung-${dkey(new Date())}.json`;
@@ -798,14 +855,23 @@ $("imp-file").onchange=e=>{
 };
 
 /* ---------- Erfasste Tage ---------- */
+function renderFocus(){
+  const wi=planWeek(), f=PLAN[wi], ws=weekStart(new Date());
+  const wk=inRange(ws,addDays(ws,7)).filter(e=>val(e,f.k)).length, all=entries.filter(e=>val(e,f.k)).length, full=entries.filter(e=>scoreOf(e)===MAX).length;
+  $("focus-row").innerHTML=`<div class="row between" style="align-items:flex-start;flex-wrap:nowrap"><div style="min-width:0"><span class="label">Woche ${wi+1} von 4 · Fokus</span><div class="ftitle">${f.t}</div><div class="ftip">${f.tip}</div></div>
+    <div class="steps4" aria-label="Plan">${PLAN.map((p,i)=>`<span class="${i===wi?"on":i<wi?"done":""}"></span>`).join("")}</div></div>
+    <div class="counts"><span><b>${wk}×</b> diese Woche</span><span><b>${all}×</b> insgesamt</span><span><b>${full}×</b> ${MAX}/${MAX}</span></div>`;
+}
 function renderTrack(){
   const fd=firstDay(), today=startOfDay(new Date()), tk=dkey(today);
-  if(!fd||view==="akut"){$("track").hidden=true;return}
+  if(view==="akut"){$("track").hidden=true;$("actions").hidden=true;return}
+  $("actions").hidden=view!=="add";
+  if(!fd){$("track").hidden=false; $("dots").innerHTML=""; $("track-sum").textContent="Noch keine Einträge"; renderFocus(); $("gap-prompt").hidden=true; return}
   $("track").hidden=false;
   let html="", done=0, total=0;
   for(let i=13;i>=0;i--){
     const d=addDays(today,-i), k=dkey(d), before=k<fd;
-    if(before){html+=`<span class="dot off" aria-hidden="true"></span>`;continue}
+    if(before) continue;
     const st=dayState(k), isT=k===tk;
     if(st!=="open"){done++;total++} else if(!isT){total++}
     const lab=`${fmtDay(d)}: ${st==="t"?"getrackt":st==="open"?(isT?"heute, noch offen":"offen"):"nachgetragen, "+rating(k)}`;
@@ -815,7 +881,8 @@ function renderTrack(){
   let streak=0, d=today;
   if(dayState(tk)==="open") d=addDays(today,-1);
   while(dkey(d)>=fd && dayState(dkey(d))!=="open"){streak++; d=addDays(d,-1)}
-  $("track-sum").textContent=`${done} von ${total} Tagen erfasst${streak>1?` · Serie ${streak} Tage`:""}`;
+  $("track-sum").textContent=`${done} von ${total} Tagen erfasst`;
+  renderFocus();
   $("dots").querySelectorAll(".dot[data-k]").forEach(b=>b.onclick=()=>{
     const k=b.dataset.k;
     if(hasMeals(k)||k===tk){ dayRef=startOfDay(new Date(k+"T12:00")); setView("day") } else openFill(k);
@@ -954,15 +1021,42 @@ $("ak-next").onclick=()=>{ akCur=(akCur+1)%akTools.length; renderAkTools(); cons
 $("ak-done").onclick=()=>{ toast("Gut gemacht. Der Impuls ist vorbeigezogen."); setView("add") };
 $("ak-eat").onclick=()=>{ resetForm(); if(akArea&&akArea.why){form.whyH=[akArea.why];form.touchedH=true} setView("add"); renderForm(); window.scrollTo({top:0}) };
 
+/* Regulieren */
+function regDone(kind){
+  ovOpen(`<h2>Wie fühlst du dich jetzt?</h2><p style="max-width:30ch;margin:0" class="hint">Spür kurz nach: Bist du ruhig genug, um in Ruhe zu essen?</p>
+    <div class="row" style="justify-content:center"><button type="button" class="btn" id="rg-yes">Ich bin ruhig</button><button type="button" class="btn ghost" id="rg-more">Noch nicht</button></div>`);
+  $("rg-yes").onclick=()=>{ ovClose(); if(view!=="add")setView("add"); form.c=true; if(!form.reg.includes(kind))form.reg.push(kind); renderForm(); toast("Ruhig und reguliert ist abgehakt.",2600) };
+  $("rg-more").onclick=()=>{ ovClose(); openReg() };
+}
+function openReg(){
+  ovOpen(`<h2>Regulieren</h2><p class="hint" style="max-width:32ch;margin:0">Erst ruhig werden, dann essen. Wähle, was dir gerade guttut.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:380px">
+      <div class="reg-opt" style="flex-direction:column;align-items:stretch"><div><b>Atmen</b><small>Länger aus- als einatmen, mit Begleitung</small></div>
+        <div class="dur"><button type="button" class="chip" data-m="2">2 Min</button><button type="button" class="chip" data-m="5">5 Min</button><button type="button" class="chip" data-m="10">10 Min</button></div></div>
+      <button type="button" class="reg-opt" id="rg-arrive"><span><b>Ankommen</b><small>Geführt, 3 Minuten: Füße, Bauch, Atem, Blick</small></span><span>›</span></button>
+      <button type="button" class="reg-opt" id="rg-akut"><span><b>Weitere Werkzeuge</b><small>Akut-Hilfe: Matte, Schütteln, Welle und mehr</small></span><span>›</span></button>
+    </div>
+    <button type="button" class="btn ghost" id="ov-x">Schließen</button>`);
+  const o=$("ov");
+  $("ov-x").onclick=ovClose;
+  o.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>RUN.breath(+b.dataset.m*60,fin=>regDone("Atmen")));
+  $("rg-arrive").onclick=()=>RUN.arrive(()=>regDone("Meditation"));
+  $("rg-akut").onclick=()=>{ovClose();openAkut()};
+}
+$("reg-open").onclick=openReg;
+$("eat-start").onclick=()=>EAT.open();
+$("data-link").onclick=()=>{ setView("data"); window.scrollTo({top:0}) };
+
 /* Begleitungen mit Animation */
 let ovTimers=[], wake=null;
 function ovOpen(html){ const o=$("ov"); o.innerHTML=html; o.hidden=false; try{navigator.wakeLock&&navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{})}catch(e){} }
 function ovClose(){ ovTimers.forEach(t=>{clearTimeout(t);clearInterval(t)}); ovTimers=[]; $("ov").hidden=true; $("ov").innerHTML=""; try{wake&&wake.release()}catch(e){} wake=null }
 const mmss=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
 const RUN={
-  breath(){
-    ovOpen(`<h2>Atmen</h2><div class="bc" id="bc"><span id="bc-t">Ein</span></div><div class="big" id="bc-left">2:00</div><p class="hint" style="max-width:30ch;margin:0">4 Sekunden ein, 6 Sekunden aus. Wenn es zu lang ist, atme einfach so, wie es geht.</p><button type="button" class="btn ghost" id="ov-x">Beenden</button>`);
-    $("ov-x").onclick=ovClose; let left=120; const bc=$("bc"), tx=$("bc-t");
+  breath(secs,onDone){
+    secs=typeof secs==="number"?secs:120;
+    ovOpen(`<h2>Atmen</h2><div class="bc" id="bc"><span id="bc-t">Ein</span></div><div class="big" id="bc-left">${mmss(secs)}</div><p class="hint" style="max-width:30ch;margin:0">4 Sekunden ein, 6 Sekunden aus. Wenn es zu lang ist, atme einfach so, wie es geht.</p><button type="button" class="btn ghost" id="ov-x">Beenden</button>`);
+    $("ov-x").onclick=()=>{ const fin=left<=0; ovClose(); if(onDone) onDone(fin) }; let left=secs; const bc=$("bc"), tx=$("bc-t");
     const cycle=()=>{ bc.style.transitionDuration="4s"; bc.style.transform="scale(1)"; tx.textContent="Ein";
       ovTimers.push(setTimeout(()=>{ bc.style.transitionDuration="6s"; bc.style.transform="scale(.55)"; tx.textContent="Aus" },4000)) };
     requestAnimationFrame(()=>requestAnimationFrame(cycle)); ovTimers.push(setInterval(cycle,10000));
@@ -985,6 +1079,19 @@ const RUN={
           else $("wv-txt").textContent=b.dataset.v==="Stark"?"Das ist in Ordnung. Bleib beim Atmen, sie wird kleiner.":"Merkst du, wie sie sich verändert? Bleib noch ein wenig dabei." }) }
       if(left<=0){ ovTimers.forEach(t=>clearInterval(t)); ovTimers=[]; svg.style.transform="scaleY(.15)"; $("wv-left").textContent="Fertig"; $("ov-x").textContent="Schließen";
         if(!/abgeebbt/.test($("wv-txt").textContent)) $("wv-txt").textContent="Zehn Minuten sind um. Wie ist es jetzt?" } },1000));
+  },
+  arrive(onDone){
+    const ST=[["Füße","Stell beide Füße auf den Boden. Spür, wie er dich trägt."],["Bauch","Leg eine Hand auf den Bauch. Spür die Wärme deiner Hand."],
+      ["Atem","Atme langsam aus, länger als ein. Drei, vier Mal."],["Schultern","Lass die Schultern sinken, den Kiefer weich werden."],
+      ["Blick","Lass den Blick weit werden. Schau in die Ferne oder aus dem Fenster."],["Nachspüren","Wie ist es jetzt in dir? Ist da Hunger, und wie stark?"]];
+    let i=0, left=30;
+    const draw=()=>{ const [t,h]=ST[i];
+      ovOpen(`<div class="steps-n" style="font-size:1rem;letter-spacing:.08em;text-transform:uppercase">${i+1} von ${ST.length}</div><h2>${t}</h2><p style="max-width:30ch;margin:0">${h}</p><div class="big" id="ar-left">0:30</div>
+        <div class="row" style="justify-content:center"><button type="button" class="btn" id="ov-next">Weiter</button><button type="button" class="btn ghost" id="ov-x">Beenden</button></div>`);
+      left=30; $("ov-next").onclick=next; $("ov-x").onclick=ovClose;
+      ovTimers.push(setInterval(()=>{ left--; const el=$("ar-left"); if(el) el.textContent=mmss(Math.max(0,left)); if(left<=0) next() },1000)) };
+    const next=()=>{ ovTimers.forEach(t=>{clearTimeout(t);clearInterval(t)}); ovTimers=[]; i++; if(i>=ST.length){ ovClose(); onDone&&onDone(); return } draw() };
+    draw();
   },
   ground(){
     const ST=[[5,"Dinge, die du siehst","Lass den Blick langsam wandern und benenne sie innerlich."],[4,"Dinge, die du hörst","Nahe und ferne Geräusche."],[3,"Dinge, die du spürst","Füße auf dem Boden, Kleidung auf der Haut, die Luft."],[2,"Dinge, die du riechst","Auch wenn es nur ganz schwach ist."],[1,"Ding, das du schmeckst","Oder einfach den eigenen Mund."]];
@@ -1080,7 +1187,7 @@ const EAT=(()=>{
     setTimeout(()=>{ stopAll(); try{wake&&wake.release()}catch(e){} wake=null },t);
     $e("eat").hidden=true;
     if(finished&&t0){ const d=new Date(t0); $("f-when").value=toInput(d); whenTouched=true;
-      const bb=document.querySelectorAll("#crit .ck")[5]; if(bb) bb.scrollIntoView({behavior:"smooth",block:"center"});
+      form.scaleB=true; renderForm(); const bb=$("ck-b"); if(bb) bb.scrollIntoView({behavior:"smooth",block:"center"});
       toast("Wie satt bist du jetzt? Trag die Hungerstufe danach ein.",3500) }
     t0=0;
   }
@@ -1099,18 +1206,19 @@ function setView(v){
   view=v;
   document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.view===v));
   ["add","day","week","data","fill","akut"].forEach(x=>$("v-"+x).hidden=x!==v);
-  $("track").hidden=(v==="akut"); if(v!=="akut") renderTrack();
+  $("track").hidden=(v==="akut"); $("actions").hidden=(v!=="add"); if(v!=="akut") renderTrack();
   if(v==="day")renderDay(); if(v==="week")renderWeek(); if(v==="data")renderData();
 }
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{if(b.dataset.view==="add"&&editingId)resetForm();setView(b.dataset.view)});
 
 let tt; function toast(m,ms){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,ms||2200)}
-const GOOD={c:"Ruhig ankommen",h:"Mit echtem Hunger beginnen",p:"Auf dem Teller anrichten",s:"Im Sitzen essen",f:"Ohne Ablenkung essen",b:"Bei der 5 aufhören",n:"Dich genährt fühlen"};
+const GOOD={c:"Ruhig ankommen",h:"Mit echtem Hunger beginnen",t:"Am Tisch mit Teller essen",f:"Präsent essen",b:"Bei der 5 aufhören"};
 function praise(e){
   const sc=scoreOf(e);
   if(sc===MAX) return `${MAX} von ${MAX}. Alles im Einklang, schön.`;
   if(sc===0) return "Eingetragen. Auch das ist eine wertvolle Information.";
-  const order=["b","h","c","f","n","s","p"], k=order.find(x=>e[x]);
+  const fk=focus().k; if(val(e,fk)&&sc<MAX) return `${sc} von ${MAX}. Dein Wochenfokus hat geklappt: ${GOOD[fk]}.`;
+  const order=["b","h","c","f","t"], k=order.find(x=>val(e,x));
   return `${sc} von ${MAX}. ${GOOD[k]} hat gut geklappt.`;
 }
 $("hs").innerHTML=HS.filter(r=>r[0]<=7).map(r=>`<li class="${r[0]===2||r[0]===5?"ideal":""}"><span class="lv">${r[0]===7?"7–10":r[0]}</span><div><b>${r[0]===7?"Übervoll bis vollgestopft":r[1]}</b><p>${r[0]===7?"Mehr gegessen als der Körper braucht. Blähungen, Trägheit, eventuell Reue.":r[2]}</p></div></li>`).join("");
