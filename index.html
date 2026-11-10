@@ -399,10 +399,6 @@ details{border-top:0}
     <div class="when-row"><input type="datetime-local" id="f-when" aria-label="Wann"><button type="button" class="chip" id="f-pms" aria-pressed="false">PMS</button></div>
     <div class="seg" id="meal" role="group" aria-label="Mahlzeit"></div>
     <div class="crit" id="crit"></div>
-    <div>
-      <div class="label" style="margin-bottom:6px">Vorher reguliert mit</div>
-      <div class="chips" id="reg"></div>
-    </div>
     <div id="feel-wrap" hidden>
       <div class="label" style="margin-bottom:6px">Welches Gefühl war da? (optional)</div>
       <div class="chips" id="feel"></div>
@@ -522,7 +518,7 @@ const HS=[
   [10,"Vollgestopft","Maximal überfüllt."]
 ];
 const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const APP_VERSION=24;
+const APP_VERSION=25;
 const KEY="tenten.entries.v1", KEY_BK="tenten.lastBackup", KEY_DAYS="tenten.days.v1";
 
 const $=id=>document.getElementById(id);
@@ -629,7 +625,7 @@ function renderForm(){
   const SHORT={"Mittagessen":"Mittag","Abendessen":"Abend"};
   MEALS.forEach(t=>{const x=document.createElement("button");x.type="button";x.textContent=SHORT[t]||t;
     x.setAttribute("aria-pressed",form.meal===t);x.onclick=()=>{form.meal=form.meal===t?null:t;renderForm()};mel.appendChild(x)});
-  chipGroup("reg",REG,form.reg);
+
   const needFeel=activeWhy().some(t=>FEEL_TRIGGERS.includes(t));
   $("feel-wrap").hidden=!needFeel;
   if(needFeel){ const f=$("feel"); f.innerHTML=""; f.appendChild(makeChips(FEELINGS,form.feelings)) }
